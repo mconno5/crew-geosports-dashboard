@@ -80,3 +80,44 @@ git add docs/index.html docs/.nojekyll
 git commit -m "Update GeoSports dashboard"
 git push
 ```
+
+Or use the publish helper, which skips empty commits:
+
+```bash
+./scripts/publish_site.sh
+```
+
+## Daily Automation
+
+This repo includes a LaunchAgent template at:
+
+```text
+launchd/com.mark.geosports-dashboard.plist
+```
+
+It runs every day at 8:00 PM and writes logs to:
+
+```text
+logs/geosports-dashboard.out.log
+logs/geosports-dashboard.err.log
+```
+
+Install it with:
+
+```bash
+mkdir -p ~/Library/LaunchAgents
+cp launchd/com.mark.geosports-dashboard.plist ~/Library/LaunchAgents/
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.mark.geosports-dashboard.plist
+```
+
+Trigger a manual scheduled run:
+
+```bash
+launchctl kickstart gui/$(id -u)/com.mark.geosports-dashboard
+```
+
+Unload it:
+
+```bash
+launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.mark.geosports-dashboard.plist
+```
