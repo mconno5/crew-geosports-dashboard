@@ -1,0 +1,30 @@
+# Ignore everything by default so unrelated local learning projects and raw exports
+# do not get swept into the GitHub Pages repo.
+*
+
+# Project source
+!README.md
+!dashboard.html
+!geosports_search.py
+!geosports/
+!geosports/**
+!config/
+!config/**
+!tests/
+!tests/**
+!scripts/
+!scripts/**
+
+# GitHub Pages output
+!docs/
+!docs/**
+
+# Git metadata/config
+!.gitignore
+
+# Always ignore generated/cache files.
+__pycache__/
+*.py[cod]
+.DS_Store
+data/
+dist/

@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Crew · GeoSports Report</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0d0d0f; --surface: #16161a; --surface2: #1e1e24;
+    --border: rgba(255,255,255,0.07); --text: #f0ede8;
+    --muted: rgba(240,237,232,0.45); --accent: #e8c84a;
+    --font-display: 'Bebas Neue', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-body); min-height: 100vh; overflow-x: hidden; }
+  .header { padding: 48px 40px 32px; border-bottom: 1px solid var(--border); position: relative; overflow: hidden; }
+  .header::before { content: 'GEOSPORTS'; position: absolute; top: -10px; right: -20px; font-family: var(--font-display); font-size: 160px; color: rgba(255,255,255,0.025); pointer-events: none; line-height: 1; }
+  .header-eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.15em; color: var(--accent); text-transform: uppercase; margin-bottom: 10px; }
+  .header-title { font-family: var(--font-display); font-size: clamp(42px, 8vw, 72px); letter-spacing: 0.02em; line-height: 1; margin-bottom: 8px; }
+  .header-sub { color: var(--muted); font-size: 14px; font-weight: 300; }
+  .container { padding: 32px 40px; max-width: 960px; margin: 0 auto; }
+  .section { margin-bottom: 40px; }
+  .section-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.18em; color: var(--muted); text-transform: uppercase; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 40px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px 18px; }
+  .stat-label { font-size: 10px; letter-spacing: 0.12em; color: var(--muted); text-transform: uppercase; font-family: var(--font-mono); margin-bottom: 8px; }
+  .stat-val { font-family: var(--font-display); font-size: 36px; letter-spacing: 0.02em; color: var(--text); line-height: 1; }
+  .stat-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  /* Filter toggle */
+  .filter-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .hint { font-family: var(--font-mono); font-size: 10px; color: var(--muted); opacity: 0.6; letter-spacing: 0.05em; }
+  .toggle-wrap { display: flex; align-items: center; gap: 10px; font-family: var(--font-mono); font-size: 11px; color: var(--muted); cursor: pointer; user-select: none; }
+  .toggle-wrap:hover { color: var(--text); }
+  .toggle { position: relative; width: 36px; height: 20px; }
+  .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .toggle-track { position: absolute; inset: 0; background: rgba(255,255,255,0.1); border-radius: 20px; transition: background 0.2s; border: 1px solid var(--border); }
+  .toggle input:checked + .toggle-track { background: var(--accent); border-color: var(--accent); }
+  .toggle-thumb { position: absolute; top: 3px; left: 3px; width: 12px; height: 12px; background: rgba(255,255,255,0.5); border-radius: 50%; transition: transform 0.2s, background 0.2s; }
+  .toggle input:checked ~ .toggle-thumb { transform: translateX(16px); background: #0d0d0f; }
+
+  .leaderboard { display: flex; flex-direction: column; gap: 8px; }
+  .player-row {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 14px 18px; display: grid; grid-template-columns: 28px 1fr auto auto auto auto;
+    align-items: center; gap: 16px; cursor: pointer; transition: border-color 0.15s, background 0.15s, opacity 0.15s, transform 0.2s;
+  }
+  .player-row:hover { border-color: rgba(255,255,255,0.2); }
+  .player-row.rank-1 { border-color: rgba(232,200,74,0.4); background: rgba(232,200,74,0.05); }
+  .player-row.rank-2 { border-color: rgba(180,180,200,0.25); }
+  .player-row.rank-3 { border-color: rgba(180,120,60,0.25); }
+  .player-row.active { background: rgba(255,255,255,0.06) !important; border-color: rgba(255,255,255,0.3) !important; }
+  .player-row.dimmed { opacity: 0.3; }
+  .player-row.hidden { display: none; }
+  .rank-num { font-family: var(--font-display); font-size: 20px; color: var(--muted); line-height: 1; }
+  .rank-1 .rank-num { color: var(--accent); }
+  .player-name { font-family: var(--font-mono); font-size: 13px; color: var(--text); display: flex; align-items: center; gap: 8px; }
+  .player-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .player-avg { font-family: var(--font-display); font-size: 26px; letter-spacing: 0.02em; text-align: right; line-height: 1; }
+  .player-stat { font-size: 11px; color: var(--muted); font-family: var(--font-mono); text-align: right; line-height: 1.6; }
+  .player-games { font-size: 11px; color: var(--muted); font-family: var(--font-mono); text-align: right; }
+  .avg-bar-wrap { width: 80px; height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
+  .avg-bar { height: 100%; border-radius: 2px; }
+  .small-badge { font-size: 9px; font-family: var(--font-mono); color: var(--muted); background: rgba(255,255,255,0.07); border-radius: 3px; padding: 2px 5px; margin-left: 4px; letter-spacing: 0.05em; }
+
+  .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 24px; margin-bottom: 16px; }
+  .chart-title { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; color: var(--muted); text-transform: uppercase; margin-bottom: 20px; }
+  .chart-container { position: relative; width: 100%; height: 280px; }
+  .chart-container.tall { height: 340px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); font-family: var(--font-mono); cursor: pointer; transition: opacity 0.15s; padding: 4px 6px; border-radius: 4px; }
+  .legend-item:hover { background: rgba(255,255,255,0.06); }
+  .legend-item.active { color: var(--text); }
+  .legend-item.dimmed { opacity: 0.3; }
+  .legend-item.hidden { display: none; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .footer { border-top: 1px solid var(--border); padding: 24px 40px; font-size: 11px; color: var(--muted); font-family: var(--font-mono); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  @media (max-width: 600px) {
+    .header, .container, .footer { padding-left: 20px; padding-right: 20px; }
+    .player-row { grid-template-columns: 24px 1fr auto; }
+    .player-stat, .player-games, .avg-bar-wrap { display: none; }
+    .header::before { font-size: 80px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="container" style="padding-top:0; padding-bottom:0;">
+    <div class="header-eyebrow">The Crew · Weekly Wrap</div>
+    <div class="header-title">GeoSports<br>Report</div>
+    <div class="header-sub">May 9 - June 3, 2026 &nbsp;·&nbsp; 8 players &nbsp;·&nbsp; 136 scores logged</div>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="section">
+    <div class="section-label">At a glance</div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Group avg</div>
+        <div class="stat-val">716</div>
+        <div class="stat-sub">out of 1,000</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Games played</div>
+        <div class="stat-val">136</div>
+        <div class="stat-sub">across 8 players</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">All-time high</div>
+        <div class="stat-val" style="color:#4ae8a0">987</div>
+        <div class="stat-sub">Cam · May 18th</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">All-time low</div>
+        <div class="stat-val" style="color:#e84a4a">357</div>
+        <div class="stat-sub">Matt · May 19th</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Leaderboard</div>
+    <div class="filter-row">
+      <div class="hint">click a player to highlight their line below</div>
+      <label class="toggle-wrap">
+        10+ games only
+        <div class="toggle">
+          <input type="checkbox" id="filterToggle">
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </div>
+      </label>
+    </div>
+    <div class="leaderboard" id="leaderboard"></div>
+  </div>
+
+  <div class="section">
+    <div class="chart-card">
+      <div class="chart-title">Average score by player</div>
+      <div class="chart-container">
+        <canvas id="barChart" role="img" aria-label="Bar chart of average GeoSports scores per player"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="chart-card">
+      <div class="chart-title">Score history · daily</div>
+      <div class="chart-container tall">
+        <canvas id="lineChart" role="img" aria-label="Line chart of daily GeoSports scores per player"></canvas>
+      </div>
+      <div class="legend" id="legend"></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <span>geosports.app · The Crew group chat</span>
+  <span>Generated June 3, 2026</span>
+</div>
+
+<script>
+const players = [
+  {
+    "id": "3125550101",
+    "name": "Cam",
+    "avg": 827,
+    "count": 6,
+    "best": 987,
+    "worst": 606,
+    "color": "#4ae8e8"
+  },
+  {
+    "id": "3125550102",
+    "name": "Sanup",
+    "avg": 821,
+    "count": 25,
+    "best": 935,
+    "worst": 541,
+    "color": "#4ae8a0"
+  },
+  {
+    "id": "3125550103",
+    "name": "Casey",
+    "avg": 717,
+    "count": 22,
+    "best": 898,
+    "worst": 519,
+    "color": "#e8734a"
+  },
+  {
+    "id": "3125550104",
+    "name": "Tyler",
+    "avg": 700,
+    "count": 13,
+    "best": 887,
+    "worst": 536,
+    "color": "#e84a8a"
+  },
+  {
+    "id": "Me",
+    "name": "Mark",
+    "avg": 689,
+    "count": 26,
+    "best": 877,
+    "worst": 475,
+    "color": "#4a9ee8"
+  },
+  {
+    "id": "3125550105",
+    "name": "Vince",
+    "avg": 676,
+    "count": 20,
+    "best": 835,
+    "worst": 376,
+    "color": "#c4a84a"
+  },
+  {
+    "id": "3125550106",
+    "name": "Connor",
+    "avg": 650,
+    "count": 3,
+    "best": 678,
+    "worst": 634,
+    "color": "#7ae84a"
+  },
+  {
+    "id": "3125550199",
+    "name": "Matt",
+    "avg": 647,
+    "count": 21,
+    "best": 897,
+    "worst": 357,
+    "color": "#a04ae8"
+  }
+];
+
+const dates = [
+  "05-09",
+  "05-10",
+  "05-11",
+  "05-12",
+  "05-13",
+  "05-14",
+  "05-15",
+  "05-16",
+  "05-17",
+  "05-18",
+  "05-19",
+  "05-20",
+  "05-21",
+  "05-22",
+  "05-23",
+  "05-24",
+  "05-25",
+  "05-26",
+  "05-27",
+  "05-28",
+  "05-29",
+  "05-30",
+  "05-31",
+  "06-01",
+  "06-02",
+  "06-03"
+];
+
+const dailyScores = {
+  "3125550101": [
+    null,
+    606,
+    null,
+    null,
+    null,
+    740,
+    null,
+    null,
+    null,
+    987,
+    873,
+    null,
+    null,
+    799,
+    null,
+    null,
+    null,
+    957,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+  ],
+  "3125550102": [
+    null,
+    541,
+    828,
+    796,
+    803,
+    896,
+    896,
+    710,
+    731,
+    738,
+    878,
+    934,
+    859,
+    807,
+    818,
+    931,
+    783,
+    804,
+    849,
+    772,
+    935,
+    794,
+    732,
+    884,
+    907,
+    887
+  ],
+  "3125550103": [
+    null,
+    null,
+    595,
+    743,
+    null,
+    836,
+    771,
+    519,
+    587,
+    860,
+    541,
+    799,
+    750,
+    612,
+    873,
+    null,
+    813,
+    811,
+    854,
+    640,
+    738,
+    898,
+    656,
+    563,
+    604,
+    714
+  ],
+  "3125550104": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    543,
+    null,
+    null,
+    685,
+    775,
+    887,
+    647,
+    663,
+    826,
+    null,
+    706,
+    null,
+    754,
+    754,
+    567,
+    536,
+    763,
+    null,
+    null,
+    null,
+    null
+  ],
+  "Me": [
+    702,
+    483,
+    789,
+    865,
+    705,
+    728,
+    750,
+    475,
+    808,
+    877,
+    515,
+    611,
+    629,
+    761,
+    786,
+    698,
+    537,
+    661,
+    786,
+    624,
+    634,
+    871,
+    568,
+    771,
+    567,
+    725
+  ],
+  "3125550105": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    634,
+    null,
+    700,
+    754,
+    835,
+    376,
+    691,
+    508,
+    762,
+    770,
+    626,
+    530,
+    614,
+    775,
+    661,
+    801,
+    826,
+    618,
+    590,
+    765,
+    692
+  ],
+  "3125550106": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    634,
+    null,
+    null,
+    null,
+    null,
+    639,
+    null,
+    null,
+    null,
+    678,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+  ],
+  "3125550199": [
+    731,
+    493,
+    null,
+    null,
+    null,
+    709,
+    615,
+    675,
+    493,
+    795,
+    357,
+    640,
+    557,
+    764,
+    null,
+    666,
+    null,
+    645,
+    897,
+    667,
+    792,
+    719,
+    610,
+    687,
+    519,
+    548
+  ]
+};
+
+const maxAvg = players[0].avg;
+let activePlayer = null;
+let filterActive = false;
+
+// Build leaderboard rows
+const lb = document.getElementById('leaderboard');
+players.forEach((p, i) => {
+  const row = document.createElement('div');
+  row.className = `player-row rank-${i+1}`;
+  row.dataset.id = p.id;
+  row.dataset.count = p.count;
+  const badge = p.count < 10 ? `<span class="small-badge">${p.count} games</span>` : '';
+  row.innerHTML = `
+    <div class="rank-num">${i+1}</div>
+    <div class="player-name"><span class="player-dot" style="background:${p.color}"></span>${p.name}${badge}</div>
+    <div class="avg-bar-wrap"><div class="avg-bar" style="width:${Math.round(p.avg/maxAvg*100)}%;background:${p.color}"></div></div>
+    <div class="player-stat">best ${p.best}<br>worst ${p.worst}</div>
+    <div class="player-games">${p.count} games</div>
+    <div class="player-avg" style="color:${p.color}">${p.avg}</div>`;
+  row.addEventListener('click', () => toggleHighlight(p.id));
+  lb.appendChild(row);
+});
+
+// Bar chart
+const barChart = new Chart(document.getElementById('barChart'), {
+  type: 'bar',
+  data: {
+    labels: players.map(p => p.name),
+    datasets: [{ data: players.map(p => p.avg), backgroundColor: players.map(p => p.color + 'cc'), borderColor: players.map(p => p.color), borderWidth: 1, borderRadius: 4 }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    onClick: (evt, elements) => { if (elements.length > 0) toggleHighlight(players[elements[0].index].id); },
+    scales: {
+      y: { min: 400, max: 1000, ticks: { color: 'rgba(240,237,232,0.4)', font: { family: 'DM Mono', size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' }, border: { color: 'rgba(255,255,255,0.05)' } },
+      x: { ticks: { color: 'rgba(240,237,232,0.5)', font: { family: 'DM Mono', size: 10 } }, grid: { display: false }, border: { color: 'rgba(255,255,255,0.05)' } }
+    }
+  }
+});
+
+// Line chart
+const lineChart = new Chart(document.getElementById('lineChart'), {
+  type: 'line',
+  data: {
+    labels: dates,
+    datasets: players.map(p => ({
+      label: p.name, data: dailyScores[p.id],
+      borderColor: p.color, backgroundColor: p.color + '18',
+      tension: 0.35, spanGaps: false, pointRadius: 3, pointHoverRadius: 5, borderWidth: 2
+    }))
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { min: 300, max: 1050, ticks: { color: 'rgba(240,237,232,0.4)', font: { family: 'DM Mono', size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' }, border: { color: 'rgba(255,255,255,0.05)' } },
+      x: { ticks: { color: 'rgba(240,237,232,0.4)', font: { family: 'DM Mono', size: 9 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 13 }, grid: { color: 'rgba(255,255,255,0.03)' }, border: { color: 'rgba(255,255,255,0.05)' } }
+    }
+  }
+});
+
+// Legend
+const legendEl = document.getElementById('legend');
+players.forEach(p => {
+  const item = document.createElement('span');
+  item.className = 'legend-item';
+  item.dataset.id = p.id;
+  item.dataset.count = p.count;
+  item.innerHTML = `<span class="legend-dot" style="background:${p.color}"></span>${p.name}`;
+  item.addEventListener('click', () => toggleHighlight(p.id));
+  legendEl.appendChild(item);
+});
+
+// Filter toggle
+document.getElementById('filterToggle').addEventListener('change', function() {
+  filterActive = this.checked;
+  if (activePlayer) {
+    const ap = players.find(p => p.id === activePlayer);
+    if (ap && filterActive && ap.count < 10) {
+      activePlayer = null;
+    }
+  }
+  applyHighlight();
+  applyFilter();
+});
+
+function applyFilter() {
+  const rows = document.querySelectorAll('.player-row');
+  const legendItems = document.querySelectorAll('.legend-item');
+
+  rows.forEach(row => {
+    const count = parseInt(row.dataset.count);
+    if (filterActive && count < 10) row.classList.add('hidden');
+    else row.classList.remove('hidden');
+  });
+
+  legendItems.forEach(item => {
+    const count = parseInt(item.dataset.count);
+    if (filterActive && count < 10) item.classList.add('hidden');
+    else item.classList.remove('hidden');
+  });
+
+  // Update bar & line charts to hide filtered players
+  players.forEach((p, i) => {
+    const hide = filterActive && p.count < 10;
+    barChart.data.datasets[0].backgroundColor[i] = hide ? 'transparent' : (activePlayer ? (p.id === activePlayer ? p.color : p.color + '22') : p.color + 'cc');
+    barChart.data.datasets[0].borderColor[i] = hide ? 'transparent' : (activePlayer ? (p.id === activePlayer ? p.color : p.color + '22') : p.color);
+    const ds = lineChart.data.datasets[i];
+    if (hide) {
+      ds.borderColor = 'transparent';
+      ds.pointRadius = 0;
+    } else {
+      ds.borderColor = activePlayer ? (p.id === activePlayer ? p.color : p.color + '20') : p.color;
+      ds.pointRadius = activePlayer ? (p.id === activePlayer ? 4 : 0) : 3;
+      ds.borderWidth = activePlayer ? (p.id === activePlayer ? 3 : 1) : 2;
+    }
+  });
+  barChart.update('none');
+  lineChart.update('none');
+}
+
+function toggleHighlight(id) {
+  const p = players.find(pl => pl.id === id);
+  if (filterActive && p && p.count < 10) return;
+  activePlayer = (activePlayer === id) ? null : id;
+  applyHighlight();
+}
+
+function applyHighlight() {
+  document.querySelectorAll('.player-row').forEach(row => {
+    if (row.classList.contains('hidden')) return;
+    if (!activePlayer) { row.classList.remove('active', 'dimmed'); }
+    else if (row.dataset.id === activePlayer) { row.classList.add('active'); row.classList.remove('dimmed'); }
+    else { row.classList.add('dimmed'); row.classList.remove('active'); }
+  });
+
+  document.querySelectorAll('.legend-item').forEach(item => {
+    if (item.classList.contains('hidden')) return;
+    if (!activePlayer) { item.classList.remove('active', 'dimmed'); }
+    else if (item.dataset.id === activePlayer) { item.classList.add('active'); item.classList.remove('dimmed'); }
+    else { item.classList.add('dimmed'); item.classList.remove('active'); }
+  });
+
+  players.forEach((p, i) => {
+    const hide = filterActive && p.count < 10;
+    if (hide) return;
+    barChart.data.datasets[0].backgroundColor[i] = !activePlayer ? p.color + 'cc' : p.id === activePlayer ? p.color : p.color + '22';
+    barChart.data.datasets[0].borderColor[i] = !activePlayer ? p.color : p.id === activePlayer ? p.color : p.color + '22';
+    const ds = lineChart.data.datasets[i];
+    if (!activePlayer) { ds.borderColor = p.color; ds.pointRadius = 3; ds.borderWidth = 2; }
+    else if (p.id === activePlayer) { ds.borderColor = p.color; ds.pointRadius = 4; ds.borderWidth = 3; }
+    else { ds.borderColor = p.color + '20'; ds.pointRadius = 0; ds.borderWidth = 1; }
+  });
+  barChart.update('none');
+  lineChart.update('none');
+}
+</script>
+</body>
+</html>
