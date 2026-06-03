@@ -105,6 +105,7 @@ logs/geosports-dashboard.err.log
 Install it with:
 
 ```bash
+cd ~/crew-geosports-dashboard
 mkdir -p ~/Library/LaunchAgents
 cp launchd/com.mark.geosports-dashboard.plist ~/Library/LaunchAgents/
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.mark.geosports-dashboard.plist

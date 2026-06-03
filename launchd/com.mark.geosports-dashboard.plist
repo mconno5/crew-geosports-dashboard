@@ -9,11 +9,11 @@
   <key>ProgramArguments</key>
   <array>
     <string>/bin/bash</string>
-    <string>/Users/markconnolly/Desktop/Mark Coding/scripts/publish_site.sh</string>
+    <string>/Users/markconnolly/crew-geosports-dashboard/scripts/publish_site.sh</string>
   </array>
 
   <key>WorkingDirectory</key>
-  <string>/Users/markconnolly/Desktop/Mark Coding</string>
+  <string>/Users/markconnolly/crew-geosports-dashboard</string>
 
   <key>StartCalendarInterval</key>
   <dict>
@@ -24,10 +24,10 @@
   </dict>
 
   <key>StandardOutPath</key>
-  <string>/Users/markconnolly/Desktop/Mark Coding/logs/geosports-dashboard.out.log</string>
+  <string>/Users/markconnolly/crew-geosports-dashboard/logs/geosports-dashboard.out.log</string>
 
   <key>StandardErrorPath</key>
-  <string>/Users/markconnolly/Desktop/Mark Coding/logs/geosports-dashboard.err.log</string>
+  <string>/Users/markconnolly/crew-geosports-dashboard/logs/geosports-dashboard.err.log</string>
 
   <key>RunAtLoad</key>
   <false/>
