@@ -3,7 +3,9 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-python3 -m geosports build
+PYTHON_BIN="${PYTHON_BIN:-/Library/Frameworks/Python.framework/Versions/3.13/bin/python3}"
+
+"$PYTHON_BIN" -m geosports build
 
 mkdir -p docs
 cp dist/dashboard.html docs/index.html
