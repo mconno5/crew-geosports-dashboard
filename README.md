@@ -95,7 +95,7 @@ This repo includes a LaunchAgent template at:
 launchd/com.mark.geosports-dashboard.plist
 ```
 
-It runs every day at 8:00 PM and writes logs to:
+It runs every day at 1:00 PM and writes logs to:
 
 ```text
 logs/geosports-dashboard.out.log
