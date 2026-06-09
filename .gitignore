@@ -32,3 +32,6 @@ __pycache__/
 .DS_Store
 data/
 dist/
+
+# Private sender-to-player mapping (contains phone numbers); never publish.
+config/senders.local.json

@@ -47,8 +47,8 @@
   .leaderboard { display: flex; flex-direction: column; gap: 8px; }
   .player-row {
     background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
-    padding: 14px 18px; display: grid; grid-template-columns: 28px 1fr auto auto auto auto;
-    align-items: center; gap: 16px; cursor: pointer; transition: border-color 0.15s, background 0.15s, opacity 0.15s, transform 0.2s;
+    padding: 14px 18px; display: grid; grid-template-columns: 28px 1fr 90px 76px auto auto auto;
+    align-items: center; gap: 14px; cursor: pointer; transition: border-color 0.15s, background 0.15s, opacity 0.15s, transform 0.2s;
   }
   .player-row:hover { border-color: rgba(255,255,255,0.2); }
   .player-row.rank-1 { border-color: rgba(232,200,74,0.4); background: rgba(232,200,74,0.05); }
@@ -64,8 +64,15 @@
   .player-avg { font-family: var(--font-display); font-size: 26px; letter-spacing: 0.02em; text-align: right; line-height: 1; }
   .player-stat { font-size: 11px; color: var(--muted); font-family: var(--font-mono); text-align: right; line-height: 1.6; }
   .player-games { font-size: 11px; color: var(--muted); font-family: var(--font-mono); text-align: right; }
-  .avg-bar-wrap { width: 80px; height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
-  .avg-bar { height: 100%; border-radius: 2px; }
+  .spark { display: block; }
+  .form-cell { text-align: center; }
+  .form-chip { display: inline-block; font-family: var(--font-mono); font-size: 11px; padding: 3px 8px; border-radius: 10px; background: rgba(255,255,255,0.07); color: var(--muted); white-space: nowrap; }
+  .form-chip.hot { background: rgba(74,232,160,0.12); color: #4ae8a0; }
+  .form-chip.cold { background: rgba(122,200,232,0.12); color: #7ac8e8; }
+  .form-chip.idle { opacity: 0.5; }
+  .crowns { font-size: 11px; color: var(--accent); margin-left: 6px; font-family: var(--font-mono); }
+  .avg-note { font-size: 9px; color: var(--muted); font-family: var(--font-mono); text-align: right; margin-top: 3px; letter-spacing: 0.05em; }
+  .toggles { display: flex; gap: 18px; flex-wrap: wrap; }
   .small-badge { font-size: 9px; font-family: var(--font-mono); color: var(--muted); background: rgba(255,255,255,0.07); border-radius: 3px; padding: 2px 5px; margin-left: 4px; letter-spacing: 0.05em; }
 
   .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 24px; margin-bottom: 16px; }
@@ -82,8 +89,8 @@
   .footer { border-top: 1px solid var(--border); padding: 24px 40px; font-size: 11px; color: var(--muted); font-family: var(--font-mono); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
   @media (max-width: 600px) {
     .header, .container, .footer { padding-left: 20px; padding-right: 20px; }
-    .player-row { grid-template-columns: 24px 1fr auto; }
-    .player-stat, .player-games, .avg-bar-wrap { display: none; }
+    .player-row { grid-template-columns: 24px 1fr auto auto; }
+    .player-stat, .player-games, .spark { display: none; }
     .header::before { font-size: 80px; }
   }
 </style>
@@ -123,6 +130,16 @@
         <div class="stat-val" style="color:#e84a4a">357</div>
         <div class="stat-sub">Matt · May 19th</div>
       </div>
+      <div class="stat-card">
+        <div class="stat-label">🏆 Player of the week</div>
+        <div class="stat-val" id="powVal">—</div>
+        <div class="stat-sub" id="powSub">best avg, last 7 days</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">🔥 Hottest riser</div>
+        <div class="stat-val" id="riserVal">—</div>
+        <div class="stat-sub" id="riserSub">last 7 days vs season avg</div>
+      </div>
     </div>
   </div>
 
@@ -130,14 +147,24 @@
     <div class="section-label">Leaderboard</div>
     <div class="filter-row">
       <div class="hint">click a player to highlight their line below</div>
-      <label class="toggle-wrap">
-        10+ games only
-        <div class="toggle">
-          <input type="checkbox" id="filterToggle">
-          <div class="toggle-track"></div>
-          <div class="toggle-thumb"></div>
-        </div>
-      </label>
+      <div class="toggles">
+        <label class="toggle-wrap">
+          sort by form
+          <div class="toggle">
+            <input type="checkbox" id="formSortToggle">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </div>
+        </label>
+        <label class="toggle-wrap">
+          10+ games only
+          <div class="toggle">
+            <input type="checkbox" id="filterToggle">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </div>
+        </label>
+      </div>
     </div>
     <div class="leaderboard" id="leaderboard"></div>
   </div>
@@ -170,51 +197,168 @@
 
 <script>
 const players = [
-  { id: "3125550101", name: "Cam",    avg: 827, count: 6,  best: 987, worst: 606, color: "#4ae8e8" },
-  { id: "3125550102", name: "Sanup",  avg: 821, count: 25, best: 935, worst: 541, color: "#4ae8a0" },
-  { id: "3125550103", name: "Casey",  avg: 717, count: 22, best: 898, worst: 519, color: "#e8734a" },
-  { id: "3125550104", name: "Tyler",  avg: 700, count: 13, best: 887, worst: 536, color: "#e84a8a" },
-  { id: "3125550100", name: "Mark",   avg: 689, count: 26, best: 877, worst: 475, color: "#4a9ee8" },
-  { id: "3125550105", name: "Vince",  avg: 676, count: 20, best: 835, worst: 376, color: "#c4a84a" },
-  { id: "3125550106", name: "Connor", avg: 650, count: 3,  best: 678, worst: 634, color: "#7ae84a" },
-  { id: "3125550199", name: "Matt",   avg: 647, count: 21, best: 897, worst: 357, color: "#a04ae8" },
+  { id: "cam",    name: "Cam",    avg: 827, count: 6,  best: 987, worst: 606, color: "#4ae8e8" },
+  { id: "sanup",  name: "Sanup",  avg: 821, count: 25, best: 935, worst: 541, color: "#4ae8a0" },
+  { id: "casey",  name: "Casey",  avg: 717, count: 22, best: 898, worst: 519, color: "#e8734a" },
+  { id: "tyler",  name: "Tyler",  avg: 700, count: 13, best: 887, worst: 536, color: "#e84a8a" },
+  { id: "mark",   name: "Mark",   avg: 689, count: 26, best: 877, worst: 475, color: "#4a9ee8" },
+  { id: "vince",  name: "Vince",  avg: 676, count: 20, best: 835, worst: 376, color: "#c4a84a" },
+  { id: "connor", name: "Connor", avg: 650, count: 3,  best: 678, worst: 634, color: "#7ae84a" },
+  { id: "matt",   name: "Matt",   avg: 647, count: 21, best: 897, worst: 357, color: "#a04ae8" },
 ];
 
 const dates = ["05-09","05-10","05-11","05-12","05-13","05-14","05-15","05-16","05-17","05-18","05-19","05-20","05-21","05-22","05-23","05-24","05-25","05-26","05-27","05-28","05-29","05-30","05-31","06-01","06-02","06-03"];
 
 const dailyScores = {
-  "3125550101": [null,606,null,null,null,740,null,null,null,987,873,null,null,799,null,null,null,957,null,null,null,null,null,null,null,null],
-  "3125550102": [null,541,828,796,803,896,896,710,731,738,878,934,859,807,818,931,783,804,849,772,935,794,732,884,907,887],
-  "3125550103": [null,null,595,743,null,836,771,519,587,860,541,799,750,612,873,null,813,811,854,640,738,898,656,563,604,714],
-  "3125550104": [null,null,null,null,null,543,null,null,685,775,887,647,663,826,null,706,null,754,754,567,536,763,null,null,null,null],
-  "3125550100": [702,483,789,865,705,728,750,475,808,877,515,611,629,761,786,698,537,661,786,624,634,871,568,771,567,725],
-  "3125550105": [null,null,null,null,null,634,null,700,754,835,376,691,508,762,770,626,530,614,775,661,801,826,618,590,765,692],
-  "3125550106": [null,null,null,null,null,null,null,null,634,null,null,null,null,639,null,null,null,678,null,null,null,null,null,null,null,null],
-  "3125550199": [731,493,null,null,null,709,615,675,493,795,357,640,557,764,null,666,null,645,897,667,792,719,610,687,519,548],
+  "cam":    [null,606,null,null,null,740,null,null,null,987,873,null,null,799,null,null,null,957,null,null,null,null,null,null,null,null],
+  "sanup":  [null,541,828,796,803,896,896,710,731,738,878,934,859,807,818,931,783,804,849,772,935,794,732,884,907,887],
+  "casey":  [null,null,595,743,null,836,771,519,587,860,541,799,750,612,873,null,813,811,854,640,738,898,656,563,604,714],
+  "tyler":  [null,null,null,null,null,543,null,null,685,775,887,647,663,826,null,706,null,754,754,567,536,763,null,null,null,null],
+  "mark":   [702,483,789,865,705,728,750,475,808,877,515,611,629,761,786,698,537,661,786,624,634,871,568,771,567,725],
+  "vince":  [null,null,null,null,null,634,null,700,754,835,376,691,508,762,770,626,530,614,775,661,801,826,618,590,765,692],
+  "connor": [null,null,null,null,null,null,null,null,634,null,null,null,null,639,null,null,null,678,null,null,null,null,null,null,null,null],
+  "matt":   [731,493,null,null,null,709,615,675,493,795,357,640,557,764,null,666,null,645,897,667,792,719,610,687,519,548],
 };
 
 const maxAvg = players[0].avg;
 let activePlayer = null;
 let filterActive = false;
+let sortByForm = false;
 
-// Build leaderboard rows
-const lb = document.getElementById('leaderboard');
-players.forEach((p, i) => {
-  const row = document.createElement('div');
-  row.className = `player-row rank-${i+1}`;
-  row.dataset.id = p.id;
-  row.dataset.count = p.count;
-  const badge = p.count < 10 ? `<span class="small-badge">${p.count} games</span>` : '';
-  row.innerHTML = `
-    <div class="rank-num">${i+1}</div>
-    <div class="player-name"><span class="player-dot" style="background:${p.color}"></span>${p.name}${badge}</div>
-    <div class="avg-bar-wrap"><div class="avg-bar" style="width:${Math.round(p.avg/maxAvg*100)}%;background:${p.color}"></div></div>
-    <div class="player-stat">best ${p.best}<br>worst ${p.worst}</div>
-    <div class="player-games">${p.count} games</div>
-    <div class="player-avg" style="color:${p.color}">${p.avg}</div>`;
-  row.addEventListener('click', () => toggleHighlight(p.id));
-  lb.appendChild(row);
+// Recent form: stats over the trailing window of the daily arrays
+const FORM_DAYS = 7;
+const SPARK_DAYS = 14;
+
+const winnerByDay = dates.map((_, di) => {
+  let bestId = null, bestScore = -1;
+  players.forEach(p => {
+    const v = dailyScores[p.id][di];
+    if (v != null && v > bestScore) { bestScore = v; bestId = p.id; }
+  });
+  return bestId;
 });
+
+const formStats = {};
+players.forEach(p => {
+  const recent = dailyScores[p.id].slice(-FORM_DAYS).filter(v => v != null);
+  const recentAvg = recent.length ? Math.round(recent.reduce((a, b) => a + b, 0) / recent.length) : null;
+  let wins = 0;
+  winnerByDay.slice(-FORM_DAYS).forEach(id => { if (id === p.id) wins++; });
+  let streak = 0;
+  for (let i = winnerByDay.length - 1; i >= 0; i--) {
+    if (winnerByDay[i] === null) continue;
+    if (winnerByDay[i] === p.id) streak++;
+    else break;
+  }
+  formStats[p.id] = {
+    games: recent.length,
+    recentAvg,
+    delta: recentAvg == null ? null : recentAvg - p.avg,
+    wins,
+    streak,
+  };
+});
+
+// Spotlight cards: player of the week + hottest riser
+(function fillSpotlights() {
+  const powVal = document.getElementById('powVal');
+  const powSub = document.getElementById('powSub');
+  const riserVal = document.getElementById('riserVal');
+  const riserSub = document.getElementById('riserSub');
+  const eligible = players.filter(p => formStats[p.id].games >= 3);
+  if (!eligible.length) {
+    powSub.textContent = `need 3+ games in the last ${FORM_DAYS} days`;
+    riserSub.textContent = `need 3+ games in the last ${FORM_DAYS} days`;
+    return;
+  }
+  const pow = [...eligible].sort((a, b) => formStats[b.id].recentAvg - formStats[a.id].recentAvg)[0];
+  const pf = formStats[pow.id];
+  powVal.textContent = pow.name;
+  powVal.style.color = pow.color;
+  powSub.textContent = `${pf.recentAvg} avg · ${pf.wins} daily win${pf.wins === 1 ? '' : 's'}`
+    + (pf.streak >= 2 ? ` · ${pf.streak}-day streak` : '');
+
+  // Prefer spotlighting someone other than the player of the week, but fall
+  // back to them rather than leaving the card empty.
+  const others = eligible.filter(p => p.id !== pow.id && formStats[p.id].delta > 0);
+  const riser = others.length
+    ? others.sort((a, b) => formStats[b.id].delta - formStats[a.id].delta)[0]
+    : pow;
+  const rf = formStats[riser.id];
+  if (rf.delta > 0) {
+    riserVal.textContent = `${riser.name} +${rf.delta}`;
+    riserVal.style.color = riser.color;
+    riserSub.textContent = `${rf.recentAvg} last 7 vs ${riser.avg} season`;
+  } else {
+    riserSub.textContent = 'nobody above their season avg';
+  }
+})();
+
+function sparkline(p) {
+  const vals = dailyScores[p.id].slice(-SPARK_DAYS);
+  const w = 90, h = 26, lo = 300, hi = 1000;
+  const pts = [];
+  vals.forEach((v, i) => {
+    if (v == null) return;
+    const x = vals.length > 1 ? (i / (vals.length - 1)) * (w - 6) + 3 : w / 2;
+    const y = h - 4 - ((Math.min(Math.max(v, lo), hi) - lo) / (hi - lo)) * (h - 8);
+    pts.push([x, y]);
+  });
+  if (!pts.length) return `<svg class="spark" width="${w}" height="${h}"></svg>`;
+  const line = pts.length > 1
+    ? `<polyline points="${pts.map(pt => pt.map(n => n.toFixed(1)).join(',')).join(' ')}" fill="none" stroke="${p.color}" stroke-width="1.5" opacity="0.9"/>`
+    : '';
+  const last = pts[pts.length - 1];
+  return `<svg class="spark" width="${w}" height="${h}">${line}<circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="2.5" fill="${p.color}"/></svg>`;
+}
+
+function formChip(p) {
+  const fs = formStats[p.id];
+  const title = `last ${FORM_DAYS} days vs season avg`;
+  if (!fs.games) return '<span class="form-chip idle">idle</span>';
+  const sign = fs.delta > 0 ? '+' : '';
+  if (fs.delta >= 15) return `<span class="form-chip hot" title="${title}">🔥 ${sign}${fs.delta}</span>`;
+  if (fs.delta <= -30) return `<span class="form-chip cold" title="${title}">🧊 ${fs.delta}</span>`;
+  return `<span class="form-chip" title="${title}">${sign}${fs.delta}</span>`;
+}
+
+function leaderboardOrder() {
+  if (!sortByForm) return players;
+  return [...players].sort((a, b) => {
+    const fa = formStats[a.id], fb = formStats[b.id];
+    if ((fa.games > 0) !== (fb.games > 0)) return fb.games > 0 ? 1 : -1;
+    if (fa.games && fb.games && fb.recentAvg !== fa.recentAvg) return fb.recentAvg - fa.recentAvg;
+    return b.avg - a.avg;
+  });
+}
+
+const lb = document.getElementById('leaderboard');
+function renderLeaderboard() {
+  lb.innerHTML = '';
+  leaderboardOrder().forEach((p, i) => {
+    const fs = formStats[p.id];
+    const row = document.createElement('div');
+    row.className = `player-row rank-${i+1}`;
+    row.dataset.id = p.id;
+    row.dataset.count = p.count;
+    const badge = p.count < 10 ? `<span class="small-badge">${p.count} games</span>` : '';
+    const crowns = fs.wins > 0 ? `<span class="crowns" title="daily wins, last ${FORM_DAYS} days">👑×${fs.wins}</span>` : '';
+    const showFormAvg = sortByForm && fs.games > 0;
+    const avgNote = showFormAvg ? '<div class="avg-note">last 7</div>' : '';
+    row.innerHTML = `
+      <div class="rank-num">${i+1}</div>
+      <div class="player-name"><span class="player-dot" style="background:${p.color}"></span>${p.name}${badge}${crowns}</div>
+      ${sparkline(p)}
+      <div class="form-cell">${formChip(p)}</div>
+      <div class="player-stat">best ${p.best}<br>worst ${p.worst}</div>
+      <div class="player-games">${p.count} games</div>
+      <div class="player-avg" style="color:${p.color}">${showFormAvg ? fs.recentAvg : p.avg}${avgNote}</div>`;
+    row.addEventListener('click', () => toggleHighlight(p.id));
+    lb.appendChild(row);
+  });
+  applyFilter();
+  applyHighlight();
+}
 
 // Bar chart
 const barChart = new Chart(document.getElementById('barChart'), {
@@ -265,6 +409,14 @@ players.forEach(p => {
   item.innerHTML = `<span class="legend-dot" style="background:${p.color}"></span>${p.name}`;
   item.addEventListener('click', () => toggleHighlight(p.id));
   legendEl.appendChild(item);
+});
+
+renderLeaderboard();
+
+// Form sort toggle
+document.getElementById('formSortToggle').addEventListener('change', function() {
+  sortByForm = this.checked;
+  renderLeaderboard();
 });
 
 // Filter toggle

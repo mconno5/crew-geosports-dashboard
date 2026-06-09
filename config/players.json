@@ -1,11 +1,10 @@
 {
-  "3125550101": { "name": "Cam", "color": "#4ae8e8" },
-  "3125550102": { "name": "Sanup", "color": "#4ae8a0" },
-  "3125550103": { "name": "Casey", "color": "#e8734a" },
-  "3125550104": { "name": "Tyler", "color": "#e84a8a" },
-  "3125550100": { "name": "Mark", "color": "#4a9ee8" },
-  "Me": { "name": "Mark", "color": "#4a9ee8" },
-  "3125550105": { "name": "Vince", "color": "#c4a84a" },
-  "3125550106": { "name": "Connor", "color": "#7ae84a" },
-  "3125550199": { "name": "Matt", "color": "#a04ae8" }
+  "cam": { "name": "Cam", "color": "#4ae8e8" },
+  "sanup": { "name": "Sanup", "color": "#4ae8a0" },
+  "casey": { "name": "Casey", "color": "#e8734a" },
+  "tyler": { "name": "Tyler", "color": "#e84a8a" },
+  "mark": { "name": "Mark", "color": "#4a9ee8" },
+  "vince": { "name": "Vince", "color": "#c4a84a" },
+  "connor": { "name": "Connor", "color": "#7ae84a" },
+  "matt": { "name": "Matt", "color": "#a04ae8" }
 }

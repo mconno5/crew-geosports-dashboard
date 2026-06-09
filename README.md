@@ -19,7 +19,8 @@ That command:
 
 ## Files
 
-- `config/players.json`: maps iMessage sender handles to dashboard names and colors.
+- `config/players.json`: public player config keyed by slug (display name and color). Contains no phone numbers.
+- `config/senders.local.json`: private, gitignored mapping from iMessage sender handles (phone numbers, "Me") to player slugs. Unmapped senders get an anonymous hashed ID so raw handles never reach generated output.
 - `data/geosports_scores.csv`: raw matching messages.
 - `data/geosports_parsed.csv`: deduped score rows.
 - `data/dashboard_data.json`: generated dashboard payload.

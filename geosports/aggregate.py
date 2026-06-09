@@ -4,7 +4,7 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from statistics import mean
 
-from .config import normalize_sender, player_display
+from .config import player_display, player_id
 from .models import ScoreRow
 
 
@@ -21,7 +21,7 @@ def display_range(start, end) -> str:
     return f"{start.strftime('%B')} {start.day}, {start.year} - {end.strftime('%B')} {end.day}, {end.year}"
 
 
-def build_dashboard_data(rows: list[ScoreRow], player_config: dict[str, dict[str, str]]) -> dict:
+def build_dashboard_data(rows: list[ScoreRow], player_config: dict) -> dict:
     if not rows:
         generated = datetime.now(timezone.utc).date().isoformat()
         return {
@@ -40,14 +40,26 @@ def build_dashboard_data(rows: list[ScoreRow], player_config: dict[str, dict[str
         }
 
     sorted_rows = sorted(rows, key=lambda r: r.timestamp)
-    by_sender: dict[str, list[ScoreRow]] = defaultdict(list)
+
+    # Multiple raw senders (e.g. "Me" and a phone number) can resolve to the
+    # same player, so the one-score-per-player-per-day rule is re-applied
+    # here at the player level: first chronological score wins.
+    by_player: dict[str, list[ScoreRow]] = defaultdict(list)
+    score_by_player_day: dict[tuple, int] = {}
+    kept_rows: list[tuple[str, ScoreRow]] = []
     for row in sorted_rows:
-        by_sender[normalize_sender(row.sender)].append(row)
+        pid = player_id(row.sender, player_config)
+        key = (pid, row.timestamp.date())
+        if key in score_by_player_day:
+            continue
+        score_by_player_day[key] = row.score
+        by_player[pid].append(row)
+        kept_rows.append((pid, row))
 
     player_rows = []
-    for index, (sender, sender_rows) in enumerate(by_sender.items()):
-        display = player_display(sender, player_config, index)
-        scores = [r.score for r in sender_rows]
+    for index, (pid, p_rows) in enumerate(by_player.items()):
+        display = player_display(pid, player_config, index)
+        scores = [r.score for r in p_rows]
         player_rows.append(
             {
                 "id": display["id"],
@@ -69,14 +81,13 @@ def build_dashboard_data(rows: list[ScoreRow], player_config: dict[str, dict[str
         all_dates.append(current)
         current = current.fromordinal(current.toordinal() + 1)
 
-    by_sender_day = {(normalize_sender(r.sender), r.timestamp.date()): r.score for r in sorted_rows}
     daily_scores = {
-        player["id"]: [by_sender_day.get((player["id"], day)) for day in all_dates]
+        player["id"]: [score_by_player_day.get((player["id"], day)) for day in all_dates]
         for player in player_rows
     }
 
-    high = max(sorted_rows, key=lambda r: r.score)
-    low = min(sorted_rows, key=lambda r: r.score)
+    high_pid, high = max(kept_rows, key=lambda item: item[1].score)
+    low_pid, low = min(kept_rows, key=lambda item: item[1].score)
     names_by_id = {p["id"]: p["name"] for p in player_rows}
 
     return {
@@ -84,16 +95,16 @@ def build_dashboard_data(rows: list[ScoreRow], player_config: dict[str, dict[str
             "dateRange": display_range(start_date, end_date),
             "generatedLabel": datetime.now(timezone.utc).strftime("%B %-d, %Y"),
             "playerCount": len(player_rows),
-            "scoreCount": len(sorted_rows),
-            "groupAverage": round(mean(r.score for r in sorted_rows)),
+            "scoreCount": len(kept_rows),
+            "groupAverage": round(mean(item[1].score for item in kept_rows)),
             "highScore": {
                 "score": high.score,
-                "player": names_by_id.get(normalize_sender(high.sender), normalize_sender(high.sender)),
+                "player": names_by_id.get(high_pid, high_pid),
                 "date": ordinal_day(high.timestamp),
             },
             "lowScore": {
                 "score": low.score,
-                "player": names_by_id.get(normalize_sender(low.sender), normalize_sender(low.sender)),
+                "player": names_by_id.get(low_pid, low_pid),
                 "date": ordinal_day(low.timestamp),
             },
         },
