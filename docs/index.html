@@ -55,7 +55,7 @@
   .player-row.rank-2 { border-color: rgba(180,180,200,0.25); }
   .player-row.rank-3 { border-color: rgba(180,120,60,0.25); }
   .player-row.active { background: rgba(255,255,255,0.06) !important; border-color: rgba(255,255,255,0.3) !important; }
-  .player-row.dimmed { opacity: 0.3; }
+  .player-row.dimmed { opacity: 0.15; }
   .player-row.hidden { display: none; }
   .rank-num { font-family: var(--font-display); font-size: 20px; color: var(--muted); line-height: 1; }
   .rank-1 .rank-num { color: var(--accent); }
@@ -83,7 +83,7 @@
   .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); font-family: var(--font-mono); cursor: pointer; transition: opacity 0.15s; padding: 4px 6px; border-radius: 4px; }
   .legend-item:hover { background: rgba(255,255,255,0.06); }
   .legend-item.active { color: var(--text); }
-  .legend-item.dimmed { opacity: 0.3; }
+  .legend-item.dimmed { opacity: 0.15; }
   .legend-item.hidden { display: none; }
   .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
   .footer { border-top: 1px solid var(--border); padding: 24px 40px; font-size: 11px; color: var(--muted); font-family: var(--font-mono); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
@@ -586,9 +586,12 @@ let activePlayer = null;
 let filterActive = false;
 let sortByForm = false;
 
-// Recent form: stats over the trailing window of the daily arrays
+// Recent form: stats over the trailing window of the daily arrays.
+// The window is anchored to the latest score date for the whole group, and a
+// player needs FORM_MIN_GAMES games inside it to earn a form rating.
 const FORM_DAYS = 7;
 const SPARK_DAYS = 14;
+const FORM_MIN_GAMES = 3;
 
 const winnerByDay = dates.map((_, di) => {
   let bestId = null, bestScore = -1;
@@ -626,10 +629,10 @@ players.forEach(p => {
   const powSub = document.getElementById('powSub');
   const riserVal = document.getElementById('riserVal');
   const riserSub = document.getElementById('riserSub');
-  const eligible = players.filter(p => formStats[p.id].games >= 3);
+  const eligible = players.filter(p => formStats[p.id].games >= FORM_MIN_GAMES);
   if (!eligible.length) {
-    powSub.textContent = `need 3+ games in the last ${FORM_DAYS} days`;
-    riserSub.textContent = `need 3+ games in the last ${FORM_DAYS} days`;
+    powSub.textContent = `need ${FORM_MIN_GAMES}+ games in the last ${FORM_DAYS} days`;
+    riserSub.textContent = `need ${FORM_MIN_GAMES}+ games in the last ${FORM_DAYS} days`;
     return;
   }
   const pow = [...eligible].sort((a, b) => formStats[b.id].recentAvg - formStats[a.id].recentAvg)[0];
@@ -678,17 +681,27 @@ function formChip(p) {
   const title = `last ${FORM_DAYS} days vs season avg`;
   if (!fs.games) return '<span class="form-chip idle">idle</span>';
   const sign = fs.delta > 0 ? '+' : '';
+  if (fs.games < FORM_MIN_GAMES) {
+    return `<span class="form-chip" title="${title} · play ${FORM_MIN_GAMES}+ games to earn a form rating">${sign}${fs.delta} · ${fs.games}g</span>`;
+  }
   if (fs.delta >= 15) return `<span class="form-chip hot" title="${title}">🔥 ${sign}${fs.delta}</span>`;
   if (fs.delta <= -30) return `<span class="form-chip cold" title="${title}">🧊 ${fs.delta}</span>`;
   return `<span class="form-chip" title="${title}">${sign}${fs.delta}</span>`;
 }
 
+function formTier(p) {
+  const fs = formStats[p.id];
+  if (fs.games >= FORM_MIN_GAMES) return 0;
+  return fs.games > 0 ? 1 : 2;
+}
+
 function leaderboardOrder() {
   if (!sortByForm) return players;
   return [...players].sort((a, b) => {
+    const ta = formTier(a), tb = formTier(b);
+    if (ta !== tb) return ta - tb;
     const fa = formStats[a.id], fb = formStats[b.id];
-    if ((fa.games > 0) !== (fb.games > 0)) return fb.games > 0 ? 1 : -1;
-    if (fa.games && fb.games && fb.recentAvg !== fa.recentAvg) return fb.recentAvg - fa.recentAvg;
+    if (ta === 0 && fb.recentAvg !== fa.recentAvg) return fb.recentAvg - fa.recentAvg;
     return b.avg - a.avg;
   });
 }
@@ -704,8 +717,10 @@ function renderLeaderboard() {
     row.dataset.count = p.count;
     const badge = p.count < 10 ? `<span class="small-badge">${p.count} games</span>` : '';
     const crowns = fs.wins > 0 ? `<span class="crowns" title="daily wins, last ${FORM_DAYS} days">👑×${fs.wins}</span>` : '';
-    const showFormAvg = sortByForm && fs.games > 0;
-    const avgNote = showFormAvg ? '<div class="avg-note">last 7</div>' : '';
+    const showFormAvg = sortByForm && fs.games >= FORM_MIN_GAMES;
+    const avgNote = !sortByForm ? ''
+      : showFormAvg ? `<div class="avg-note">last 7 · ${fs.games}g</div>`
+      : '<div class="avg-note">season</div>';
     row.innerHTML = `
       <div class="rank-num">${i+1}</div>
       <div class="player-name"><span class="player-dot" style="background:${p.color}"></span>${p.name}${badge}${crowns}</div>
@@ -812,14 +827,14 @@ function applyFilter() {
   // Update bar & line charts to hide filtered players
   players.forEach((p, i) => {
     const hide = filterActive && p.count < 10;
-    barChart.data.datasets[0].backgroundColor[i] = hide ? 'transparent' : (activePlayer ? (p.id === activePlayer ? p.color : p.color + '22') : p.color + 'cc');
-    barChart.data.datasets[0].borderColor[i] = hide ? 'transparent' : (activePlayer ? (p.id === activePlayer ? p.color : p.color + '22') : p.color);
+    barChart.data.datasets[0].backgroundColor[i] = hide ? 'transparent' : (activePlayer ? (p.id === activePlayer ? p.color : p.color + '14') : p.color + 'cc');
+    barChart.data.datasets[0].borderColor[i] = hide ? 'transparent' : (activePlayer ? (p.id === activePlayer ? p.color : p.color + '14') : p.color);
     const ds = lineChart.data.datasets[i];
     if (hide) {
       ds.borderColor = 'transparent';
       ds.pointRadius = 0;
     } else {
-      ds.borderColor = activePlayer ? (p.id === activePlayer ? p.color : p.color + '20') : p.color;
+      ds.borderColor = activePlayer ? (p.id === activePlayer ? p.color : p.color + '0d') : p.color;
       ds.pointRadius = activePlayer ? (p.id === activePlayer ? 4 : 0) : 3;
       ds.borderWidth = activePlayer ? (p.id === activePlayer ? 3 : 1) : 2;
     }
@@ -853,12 +868,12 @@ function applyHighlight() {
   players.forEach((p, i) => {
     const hide = filterActive && p.count < 10;
     if (hide) return;
-    barChart.data.datasets[0].backgroundColor[i] = !activePlayer ? p.color + 'cc' : p.id === activePlayer ? p.color : p.color + '22';
-    barChart.data.datasets[0].borderColor[i] = !activePlayer ? p.color : p.id === activePlayer ? p.color : p.color + '22';
+    barChart.data.datasets[0].backgroundColor[i] = !activePlayer ? p.color + 'cc' : p.id === activePlayer ? p.color : p.color + '14';
+    barChart.data.datasets[0].borderColor[i] = !activePlayer ? p.color : p.id === activePlayer ? p.color : p.color + '14';
     const ds = lineChart.data.datasets[i];
     if (!activePlayer) { ds.borderColor = p.color; ds.pointRadius = 3; ds.borderWidth = 2; }
     else if (p.id === activePlayer) { ds.borderColor = p.color; ds.pointRadius = 4; ds.borderWidth = 3; }
-    else { ds.borderColor = p.color + '20'; ds.pointRadius = 0; ds.borderWidth = 1; }
+    else { ds.borderColor = p.color + '0d'; ds.pointRadius = 0; ds.borderWidth = 1; }
   });
   barChart.update('none');
   lineChart.update('none');
