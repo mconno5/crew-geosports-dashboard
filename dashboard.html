@@ -146,10 +146,10 @@
   <div class="section">
     <div class="section-label">Leaderboard</div>
     <div class="filter-row">
-      <div class="hint">click a player to highlight their line below</div>
+      <div class="hint" id="formWindowHint">form window ends on the latest group score</div>
       <div class="toggles">
         <label class="toggle-wrap">
-          sort by form
+          sort by 7-day form
           <div class="toggle">
             <input type="checkbox" id="formSortToggle">
             <div class="toggle-track"></div>
@@ -196,6 +196,8 @@
 </div>
 
 <script>
+const reportMeta = {};
+
 const players = [
   { id: "cam",    name: "Cam",    avg: 827, count: 6,  best: 987, worst: 606, color: "#4ae8e8" },
   { id: "sanup",  name: "Sanup",  avg: 821, count: 25, best: 935, worst: 541, color: "#4ae8a0" },
@@ -225,12 +227,25 @@ let activePlayer = null;
 let filterActive = false;
 let sortByForm = false;
 
-// Recent form: stats over the trailing window of the daily arrays.
-// The window is anchored to the latest score date for the whole group, and a
-// player needs FORM_MIN_GAMES games inside it to earn a form rating.
-const FORM_DAYS = 7;
+// Every player shares one form window anchored to the latest score posted by
+// anyone in the group. This remains correct even if future date arrays extend
+// beyond that latest score date.
+const FORM_DAYS = reportMeta.recentFormWindow?.days || 7;
 const SPARK_DAYS = 14;
 const FORM_MIN_GAMES = 3;
+
+const latestScoreIndex = players.reduce((latest, p) => {
+  const scores = dailyScores[p.id] || [];
+  for (let i = scores.length - 1; i >= 0; i--) {
+    if (scores[i] != null) return Math.max(latest, i);
+  }
+  return latest;
+}, -1);
+const formStartIndex = Math.max(0, latestScoreIndex - FORM_DAYS + 1);
+const formEndIndex = latestScoreIndex + 1;
+const formWindowLabel = reportMeta.recentFormWindow?.label || 'latest shared 7-day window';
+
+document.getElementById('formWindowHint').textContent = `form window · ${formWindowLabel}`;
 
 const winnerByDay = dates.map((_, di) => {
   let bestId = null, bestScore = -1;
@@ -243,12 +258,12 @@ const winnerByDay = dates.map((_, di) => {
 
 const formStats = {};
 players.forEach(p => {
-  const recent = dailyScores[p.id].slice(-FORM_DAYS).filter(v => v != null);
+  const recent = dailyScores[p.id].slice(formStartIndex, formEndIndex).filter(v => v != null);
   const recentAvg = recent.length ? Math.round(recent.reduce((a, b) => a + b, 0) / recent.length) : null;
   let wins = 0;
-  winnerByDay.slice(-FORM_DAYS).forEach(id => { if (id === p.id) wins++; });
+  winnerByDay.slice(formStartIndex, formEndIndex).forEach(id => { if (id === p.id) wins++; });
   let streak = 0;
-  for (let i = winnerByDay.length - 1; i >= 0; i--) {
+  for (let i = latestScoreIndex; i >= formStartIndex; i--) {
     if (winnerByDay[i] === null) continue;
     if (winnerByDay[i] === p.id) streak++;
     else break;
@@ -298,7 +313,8 @@ players.forEach(p => {
 })();
 
 function sparkline(p) {
-  const vals = dailyScores[p.id].slice(-SPARK_DAYS);
+  const sparkStartIndex = Math.max(0, latestScoreIndex - SPARK_DAYS + 1);
+  const vals = dailyScores[p.id].slice(sparkStartIndex, formEndIndex);
   const w = 90, h = 26, lo = 300, hi = 1000;
   const pts = [];
   vals.forEach((v, i) => {
@@ -317,7 +333,7 @@ function sparkline(p) {
 
 function formChip(p) {
   const fs = formStats[p.id];
-  const title = `last ${FORM_DAYS} days vs season avg`;
+  const title = `${formWindowLabel} vs season avg`;
   if (!fs.games) return '<span class="form-chip idle">idle</span>';
   const sign = fs.delta > 0 ? '+' : '';
   if (fs.games < FORM_MIN_GAMES) {
@@ -340,7 +356,15 @@ function leaderboardOrder() {
     const ta = formTier(a), tb = formTier(b);
     if (ta !== tb) return ta - tb;
     const fa = formStats[a.id], fb = formStats[b.id];
-    if (ta === 0 && fb.recentAvg !== fa.recentAvg) return fb.recentAvg - fa.recentAvg;
+    if (ta === 0) {
+      if (fb.recentAvg !== fa.recentAvg) return fb.recentAvg - fa.recentAvg;
+      if (fb.games !== fa.games) return fb.games - fa.games;
+      if (fb.wins !== fa.wins) return fb.wins - fa.wins;
+    }
+    if (ta === 1) {
+      if (fb.games !== fa.games) return fb.games - fa.games;
+      if (fb.recentAvg !== fa.recentAvg) return fb.recentAvg - fa.recentAvg;
+    }
     return b.avg - a.avg;
   });
 }
@@ -356,7 +380,7 @@ function renderLeaderboard() {
     row.dataset.count = p.count;
     const badge = p.count < 10 ? `<span class="small-badge">${p.count} games</span>` : '';
     const crowns = fs.wins > 0 ? `<span class="crowns" title="daily wins, last ${FORM_DAYS} days">👑×${fs.wins}</span>` : '';
-    const showFormAvg = sortByForm && fs.games >= FORM_MIN_GAMES;
+    const showFormAvg = sortByForm && fs.games > 0;
     const avgNote = !sortByForm ? ''
       : showFormAvg ? `<div class="avg-note">last 7 · ${fs.games}g</div>`
       : '<div class="avg-note">season</div>';

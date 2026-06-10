@@ -57,6 +57,7 @@ def render_dashboard(template_path: Path, output_path: Path, dashboard_data: dic
             flags=re.DOTALL,
         )
 
+    html = re.sub(r"const reportMeta = \{.*?\};", js_const("reportMeta", dashboard_data["meta"]), html, count=1, flags=re.DOTALL)
     html = re.sub(r"const players = \[.*?\];", js_const("players", dashboard_data["players"]), html, count=1, flags=re.DOTALL)
     html = re.sub(r"const dates = \[.*?\];", js_const("dates", dashboard_data["dates"]), html, count=1, flags=re.DOTALL)
     html = re.sub(

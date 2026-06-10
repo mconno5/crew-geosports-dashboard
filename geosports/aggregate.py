@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from statistics import mean
 
 from .config import player_display, player_id
 from .models import ScoreRow
+
+RECENT_FORM_DAYS = 7
 
 
 def ordinal_day(dt) -> str:
@@ -33,6 +35,7 @@ def build_dashboard_data(rows: list[ScoreRow], player_config: dict) -> dict:
                 "groupAverage": 0,
                 "highScore": None,
                 "lowScore": None,
+                "recentFormWindow": None,
             },
             "players": [],
             "dates": [],
@@ -75,6 +78,7 @@ def build_dashboard_data(rows: list[ScoreRow], player_config: dict) -> dict:
 
     start_date = sorted_rows[0].timestamp.date()
     end_date = sorted_rows[-1].timestamp.date()
+    recent_form_start = end_date - timedelta(days=RECENT_FORM_DAYS - 1)
     all_dates = []
     current = start_date
     while current <= end_date:
@@ -106,6 +110,12 @@ def build_dashboard_data(rows: list[ScoreRow], player_config: dict) -> dict:
                 "score": low.score,
                 "player": names_by_id.get(low_pid, low_pid),
                 "date": ordinal_day(low.timestamp),
+            },
+            "recentFormWindow": {
+                "days": RECENT_FORM_DAYS,
+                "startDate": recent_form_start.isoformat(),
+                "endDate": end_date.isoformat(),
+                "label": display_range(recent_form_start, end_date),
             },
         },
         "players": player_rows,

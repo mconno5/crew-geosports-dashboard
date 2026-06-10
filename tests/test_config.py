@@ -53,6 +53,16 @@ class AggregateTests(unittest.TestCase):
         data = build_dashboard_data(rows, EMPTY_CONFIG)
         self.assertNotIn("3125550199", str(data))
 
+    def test_recent_form_window_is_shared_and_anchored_to_latest_score(self):
+        rows = [
+            ScoreRow(datetime(2026, 5, 20, 10, tzinfo=timezone.utc), "Me", 700),
+            ScoreRow(datetime(2026, 6, 3, 10, tzinfo=timezone.utc), "3125550100", 800),
+        ]
+        window = build_dashboard_data(rows, CONFIG)["meta"]["recentFormWindow"]
+        self.assertEqual(window["days"], 7)
+        self.assertEqual(window["startDate"], "2026-05-28")
+        self.assertEqual(window["endDate"], "2026-06-03")
+
 
 if __name__ == "__main__":
     unittest.main()
