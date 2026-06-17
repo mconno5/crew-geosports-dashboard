@@ -101,7 +101,7 @@
   <div class="container" style="padding-top:0; padding-bottom:0;">
     <div class="header-eyebrow">The Crew · Weekly Wrap</div>
     <div class="header-title">GeoSports<br>Report</div>
-    <div class="header-sub">May 9 - June 12, 2026 &nbsp;·&nbsp; 8 players &nbsp;·&nbsp; 196 scores logged</div>
+    <div class="header-sub">May 9 - June 17, 2026 &nbsp;·&nbsp; 8 players &nbsp;·&nbsp; 227 scores logged</div>
   </div>
 </div>
 
@@ -112,12 +112,12 @@
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-label">Group avg</div>
-        <div class="stat-val">702</div>
+        <div class="stat-val">705</div>
         <div class="stat-sub">out of 1,000</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Games played</div>
-        <div class="stat-val">196</div>
+        <div class="stat-val">227</div>
         <div class="stat-sub">across 8 players</div>
       </div>
       <div class="stat-card">
@@ -197,11 +197,11 @@
 
 <script>
 const reportMeta = {
-  "dateRange": "May 9 - June 12, 2026",
+  "dateRange": "May 9 - June 17, 2026",
   "generatedLabel": "June 17, 2026",
   "playerCount": 8,
-  "scoreCount": 196,
-  "groupAverage": 702,
+  "scoreCount": 227,
+  "groupAverage": 705,
   "highScore": {
     "score": 987,
     "player": "Cam",
@@ -214,9 +214,9 @@ const reportMeta = {
   },
   "recentFormWindow": {
     "days": 7,
-    "startDate": "2026-06-06",
-    "endDate": "2026-06-12",
-    "label": "June 6 - 12, 2026"
+    "startDate": "2026-06-11",
+    "endDate": "2026-06-17",
+    "label": "June 11 - 17, 2026"
   }
 };
 
@@ -224,8 +224,8 @@ const players = [
   {
     "id": "sanup",
     "name": "Sanup",
-    "avg": 827,
-    "count": 34,
+    "avg": 829,
+    "count": 39,
     "best": 947,
     "worst": 541,
     "color": "#4ae8a0"
@@ -242,8 +242,8 @@ const players = [
   {
     "id": "casey",
     "name": "Casey",
-    "avg": 696,
-    "count": 31,
+    "avg": 703,
+    "count": 36,
     "best": 913,
     "worst": 493,
     "color": "#e8734a"
@@ -251,8 +251,8 @@ const players = [
   {
     "id": "tyler",
     "name": "Tyler",
-    "avg": 694,
-    "count": 19,
+    "avg": 696,
+    "count": 22,
     "best": 887,
     "worst": 497,
     "color": "#e84a8a"
@@ -260,35 +260,35 @@ const players = [
   {
     "id": "mark",
     "name": "Mark",
-    "avg": 683,
-    "count": 35,
+    "avg": 682,
+    "count": 39,
     "best": 877,
     "worst": 431,
     "color": "#4a9ee8"
   },
   {
-    "id": "vince",
-    "name": "Vince",
-    "avg": 662,
-    "count": 29,
-    "best": 872,
-    "worst": 376,
-    "color": "#c4a84a"
-  },
-  {
     "id": "matt",
     "name": "Matt",
-    "avg": 653,
-    "count": 29,
+    "avg": 676,
+    "count": 35,
     "best": 897,
     "worst": 357,
     "color": "#a04ae8"
   },
   {
+    "id": "vince",
+    "name": "Vince",
+    "avg": 662,
+    "count": 34,
+    "best": 872,
+    "worst": 376,
+    "color": "#c4a84a"
+  },
+  {
     "id": "connor",
     "name": "Connor",
-    "avg": 626,
-    "count": 11,
+    "avg": 615,
+    "count": 14,
     "best": 772,
     "worst": 455,
     "color": "#7ae84a"
@@ -330,7 +330,12 @@ const dates = [
   "06-09",
   "06-10",
   "06-11",
-  "06-12"
+  "06-12",
+  "06-13",
+  "06-14",
+  "06-15",
+  "06-16",
+  "06-17"
 ];
 
 const dailyScores = {
@@ -369,7 +374,12 @@ const dailyScores = {
     922,
     878,
     947,
-    732
+    732,
+    800,
+    891,
+    891,
+    773,
+    840
   ],
   "cam": [
     null,
@@ -405,6 +415,11 @@ const dailyScores = {
     null,
     null,
     0,
+    null,
+    null,
+    null,
+    null,
+    null,
     null,
     null
   ],
@@ -443,7 +458,12 @@ const dailyScores = {
     913,
     542,
     570,
-    493
+    493,
+    722,
+    766,
+    691,
+    661,
+    887
   ],
   "tyler": [
     null,
@@ -479,6 +499,11 @@ const dailyScores = {
     734,
     788,
     651,
+    null,
+    879,
+    668,
+    564,
+    null,
     null,
     null
   ],
@@ -517,44 +542,12 @@ const dailyScores = {
     801,
     723,
     648,
-    722
-  ],
-  "vince": [
+    722,
+    493,
+    856,
     null,
-    null,
-    null,
-    null,
-    null,
-    634,
-    null,
-    700,
-    754,
-    835,
-    376,
-    691,
-    508,
-    762,
-    770,
-    626,
-    530,
-    614,
-    775,
-    661,
-    801,
-    826,
-    618,
-    590,
-    765,
-    692,
-    746,
-    520,
-    594,
-    757,
-    518,
-    872,
-    408,
-    610,
-    648
+    577,
+    748
   ],
   "matt": [
     731,
@@ -591,7 +584,54 @@ const dailyScores = {
     775,
     687,
     746,
-    null
+    744,
+    827,
+    754,
+    805,
+    733,
+    861
+  ],
+  "vince": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    634,
+    null,
+    700,
+    754,
+    835,
+    376,
+    691,
+    508,
+    762,
+    770,
+    626,
+    530,
+    614,
+    775,
+    661,
+    801,
+    826,
+    618,
+    590,
+    765,
+    692,
+    746,
+    520,
+    594,
+    757,
+    518,
+    872,
+    408,
+    610,
+    648,
+    682,
+    586,
+    738,
+    596,
+    702
   ],
   "connor": [
     null,
@@ -628,7 +668,12 @@ const dailyScores = {
     689,
     null,
     561,
-    686
+    686,
+    523,
+    534,
+    669,
+    null,
+    null
   ]
 };
 
