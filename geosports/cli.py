@@ -9,6 +9,7 @@ from .config import load_player_config
 from .imessage import DB_PATH, MessagesDatabaseError, fetch_messages, resolve_chat_ids
 from .io import read_scores_csv, write_raw_csv, write_scores_csv
 from .parser import dedupe_scores, parse_messages
+from .recap import add_recap_subparser
 from .render import render_dashboard
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -96,7 +97,11 @@ def main() -> None:
     render_parser.add_argument("--data-json", default=str(DEFAULT_DATA_DIR / "dashboard_data.json"))
     render_parser.set_defaults(func=render)
 
+    add_recap_subparser(subparsers)
+
     args = parser.parse_args()
     if not args.command:
         args = parser.parse_args(["build"])
+    if args.command == "recap" and not args.recap_command:
+        parser.parse_args(["recap", "--help"])
     args.func(args)

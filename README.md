@@ -123,3 +123,73 @@ Unload it:
 ```bash
 launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.mark.geosports-dashboard.plist
 ```
+
+## Mobile Recap Drafts
+
+The recap agent can draft a short sports-style message after dashboard publishes.
+Drafting is limited to Monday, Wednesday, and Saturday when new scores exist.
+
+Local secret/config file:
+
+```text
+config/recap.local.env
+```
+
+Start from:
+
+```bash
+cp config/recap.example.env config/recap.local.env
+```
+
+Required values:
+
+```text
+OPENAI_API_KEY=...
+OPENAI_MODEL=...
+GITHUB_TOKEN=...
+GITHUB_REPO=mconno5/crew-geosports-dashboard
+GITHUB_APPROVAL_ISSUE_NUMBER=...
+```
+
+Draft manually:
+
+```bash
+./scripts/draft_recap.sh --if-due
+```
+
+Review from iPhone via iCloud Drive:
+
+```text
+iCloud Drive/GeoSports Recaps/latest.md
+```
+
+Approve from phone by commenting on the configured GitHub issue:
+
+```text
+/send <token>
+```
+
+Poll approvals manually:
+
+```bash
+./scripts/poll_recap_approvals.sh
+```
+
+Send latest local draft directly from the Mac:
+
+```bash
+./scripts/send_latest_recap.sh --token <token>
+```
+
+Install the hourly approval poller:
+
+```bash
+cp launchd/com.mark.geosports-recap-approval.plist ~/Library/LaunchAgents/
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.mark.geosports-recap-approval.plist
+```
+
+Unload it:
+
+```bash
+launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.mark.geosports-recap-approval.plist
+```

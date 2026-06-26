@@ -35,3 +35,6 @@ dist/
 
 # Private sender-to-player mapping (contains phone numbers); never publish.
 config/senders.local.json
+
+# Private recap/API configuration.
+config/recap.local.env

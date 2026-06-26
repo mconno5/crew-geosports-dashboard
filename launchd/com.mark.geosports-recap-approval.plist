@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.mark.geosports-recap-approval</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/markconnolly/crew-geosports-dashboard/scripts/poll_recap_approvals.sh</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/markconnolly/crew-geosports-dashboard</string>
+
+  <key>StartInterval</key>
+  <integer>3600</integer>
+
+  <key>StandardOutPath</key>
+  <string>/Users/markconnolly/crew-geosports-dashboard/logs/geosports-recap-approval.out.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>/Users/markconnolly/crew-geosports-dashboard/logs/geosports-recap-approval.err.log</string>
+
+  <key>RunAtLoad</key>
+  <false/>
+</dict>
+</plist>
