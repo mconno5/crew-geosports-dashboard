@@ -96,6 +96,14 @@ def recap_config(paths: RecapPaths) -> dict[str, str]:
     return config
 
 
+def missing_approval_config(config: dict[str, str]) -> list[str]:
+    return [
+        key
+        for key in ("GITHUB_TOKEN", "GITHUB_REPO", "GITHUB_APPROVAL_ISSUE_NUMBER")
+        if not config.get(key)
+    ]
+
+
 def load_state(path: Path) -> dict:
     if not path.exists():
         return {}
@@ -404,6 +412,14 @@ def post_github_draft_notice(config: dict[str, str], payload: dict, draft_text: 
 def draft_recap(args: argparse.Namespace) -> int:
     paths = default_paths()
     config = recap_config(paths)
+    missing = missing_approval_config(config)
+    if missing:
+        message = f"recap approval config missing: {', '.join(missing)}"
+        if args.if_due:
+            print(f"No recap drafted: {message}")
+            return 0
+        raise SystemExit(message)
+
     data = load_dashboard(paths.dashboard_json)
     state = load_state(paths.state_json)
     run_date = date.fromisoformat(args.run_date) if args.run_date else date.today()

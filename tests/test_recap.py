@@ -11,6 +11,7 @@ from geosports.recap import (
     build_fact_pack,
     default_paths,
     fallback_recap,
+    missing_approval_config,
     poll_approvals,
     save_state,
     should_draft,
@@ -74,6 +75,12 @@ class RecapTests(unittest.TestCase):
         text = fallback_recap(build_fact_pack(SAMPLE_DATA))
         self.assertIn("https://mconno5.github.io/crew-geosports-dashboard/", text)
         self.assertLessEqual(len(text), 900)
+
+    def test_missing_approval_config_requires_github_mailbox(self):
+        self.assertEqual(
+            missing_approval_config({"GITHUB_REPO": "mconno5/crew-geosports-dashboard"}),
+            ["GITHUB_TOKEN", "GITHUB_APPROVAL_ISSUE_NUMBER"],
+        )
 
     def test_poll_approval_sends_matching_token_once(self):
         with tempfile.TemporaryDirectory() as tmp:
