@@ -247,13 +247,21 @@ const formWindowLabel = reportMeta.recentFormWindow?.label || 'latest shared 7-d
 
 document.getElementById('formWindowHint').textContent = `form window · ${formWindowLabel}`;
 
-const winnerByDay = dates.map((_, di) => {
-  let bestId = null, bestScore = -1;
+const winnersByDay = dates.map((_, di) => {
+  let bestScore = -1;
+  const winners = [];
   players.forEach(p => {
     const v = dailyScores[p.id][di];
-    if (v != null && v > bestScore) { bestScore = v; bestId = p.id; }
+    if (v == null) return;
+    if (v > bestScore) {
+      bestScore = v;
+      winners.length = 0;
+      winners.push(p.id);
+    } else if (v === bestScore) {
+      winners.push(p.id);
+    }
   });
-  return bestId;
+  return winners;
 });
 
 const formStats = {};
@@ -261,11 +269,11 @@ players.forEach(p => {
   const recent = dailyScores[p.id].slice(formStartIndex, formEndIndex).filter(v => v != null);
   const recentAvg = recent.length ? Math.round(recent.reduce((a, b) => a + b, 0) / recent.length) : null;
   let wins = 0;
-  winnerByDay.slice(formStartIndex, formEndIndex).forEach(id => { if (id === p.id) wins++; });
+  winnersByDay.slice(formStartIndex, formEndIndex).forEach(ids => { if (ids.includes(p.id)) wins++; });
   let streak = 0;
   for (let i = latestScoreIndex; i >= formStartIndex; i--) {
-    if (winnerByDay[i] === null) continue;
-    if (winnerByDay[i] === p.id) streak++;
+    if (!winnersByDay[i].length) continue;
+    if (winnersByDay[i].includes(p.id)) streak++;
     else break;
   }
   formStats[p.id] = {

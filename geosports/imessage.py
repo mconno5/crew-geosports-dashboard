@@ -146,6 +146,20 @@ def blob_or_text_matches(text: str | None, attributed_body: bytes | memoryview |
     return False
 
 
+def message_columns(conn: sqlite3.Connection) -> set[str]:
+    cursor = conn.cursor()
+    cursor.execute("PRAGMA table_info(message)")
+    return {row[1] for row in cursor.fetchall()}
+
+
+def is_reply_or_reaction(
+    associated_type: int | None,
+    reply_to_guid: str | None = None,
+    thread_originator_guid: str | None = None,
+) -> bool:
+    return bool(associated_type or reply_to_guid or thread_originator_guid)
+
+
 def fetch_messages(db_path: Path, chat_ids: list[int]) -> list[RawMessage]:
     if not db_path.exists():
         raise FileNotFoundError(f"Cannot find Messages database at {db_path}")
@@ -161,10 +175,13 @@ def fetch_messages(db_path: Path, chat_ids: list[int]) -> list[RawMessage]:
         ) from exc
     try:
         cursor = conn.cursor()
+        columns = message_columns(conn)
+        reply_to_expr = "m.reply_to_guid" if "reply_to_guid" in columns else "NULL"
+        thread_originator_expr = "m.thread_originator_guid" if "thread_originator_guid" in columns else "NULL"
         cursor.execute(
             f"""
             SELECT m.date, COALESCE(h.id, 'Me') AS sender, m.text, m.attributedBody,
-                   m.associated_message_type
+                   m.associated_message_type, {reply_to_expr}, {thread_originator_expr}
             FROM message m
             JOIN chat_message_join cmj ON m.ROWID = cmj.message_id
             LEFT JOIN handle h ON m.handle_id = h.ROWID
@@ -174,8 +191,8 @@ def fetch_messages(db_path: Path, chat_ids: list[int]) -> list[RawMessage]:
             chat_ids,
         )
         rows: list[RawMessage] = []
-        for date, sender, text, attributed_body, associated_type in cursor.fetchall():
-            if associated_type:
+        for date, sender, text, attributed_body, associated_type, reply_to_guid, thread_originator_guid in cursor.fetchall():
+            if is_reply_or_reaction(associated_type, reply_to_guid, thread_originator_guid):
                 continue
             if not blob_or_text_matches(text, attributed_body):
                 continue

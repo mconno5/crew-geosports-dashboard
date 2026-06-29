@@ -13,7 +13,7 @@ That command:
 1. Finds chats matching `The Crew`.
 2. Extracts GeoSports-looking iMessage messages.
 3. Parses scores.
-4. Applies the dedupe rule: first score per sender per day, and first instance of each score per day.
+4. Applies the dedupe rule: first score per sender/player per day. Same-score ties from different players are allowed starting June 21, 2026, while older dates keep the original duplicate-score protection.
 5. Writes CSV/JSON data into `data/`.
 6. Writes the final dashboard to `dist/dashboard.html`.
 
@@ -63,6 +63,8 @@ python3 -m geosports build --input-csv data/geosports_parsed.csv
 ## macOS Permission
 
 Reading `~/Library/Messages/chat.db` requires Full Disk Access for the terminal app running the command.
+
+Reply and reaction messages are skipped so replies to prior GeoSports posts do not count as new scores.
 
 ## GitHub Pages
 

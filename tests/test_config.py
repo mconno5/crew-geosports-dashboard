@@ -7,8 +7,11 @@ from geosports.models import ScoreRow
 
 
 CONFIG = {
-    "players": {"mark": {"name": "Mark", "color": "#4a9ee8"}},
-    "senders": {"Me": "mark", "3125550100": "mark"},
+    "players": {
+        "mark": {"name": "Mark", "color": "#4a9ee8"},
+        "sam": {"name": "Sam", "color": "#de6b48"},
+    },
+    "senders": {"Me": "mark", "3125550100": "mark", "3125550101": "sam"},
 }
 
 EMPTY_CONFIG = {"players": {}, "senders": {}}
@@ -62,6 +65,16 @@ class AggregateTests(unittest.TestCase):
         self.assertEqual(window["days"], 7)
         self.assertEqual(window["startDate"], "2026-05-28")
         self.assertEqual(window["endDate"], "2026-06-03")
+
+    def test_same_day_same_score_different_players_survive(self):
+        rows = [
+            ScoreRow(datetime(2026, 6, 21, 10, tzinfo=timezone.utc), "Me", 700),
+            ScoreRow(datetime(2026, 6, 21, 11, tzinfo=timezone.utc), "3125550101", 700),
+        ]
+        data = build_dashboard_data(rows, CONFIG)
+        self.assertEqual(data["dailyScores"]["mark"], [700])
+        self.assertEqual(data["dailyScores"]["sam"], [700])
+        self.assertEqual(data["meta"]["scoreCount"], 2)
 
 
 if __name__ == "__main__":

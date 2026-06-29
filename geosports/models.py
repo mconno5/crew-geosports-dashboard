@@ -7,6 +7,7 @@ class RawMessage:
     timestamp: datetime
     sender: str
     message: str
+    is_reply: bool = False
 
 
 @dataclass(frozen=True)
