@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import io
+import json
 import tempfile
 import unittest
 from contextlib import redirect_stdout
@@ -14,6 +15,7 @@ from geosports.recap import (
     abandon_recap,
     build_fact_pack,
     default_paths,
+    draft_recap,
     draft_status,
     fallback_recap,
     load_state,
@@ -109,6 +111,48 @@ class RecapTests(unittest.TestCase):
             missing_approval_config({"GITHUB_REPO": "mconno5/crew-geosports-dashboard"}),
             ["GITHUB_TOKEN", "GITHUB_APPROVAL_ISSUE_NUMBER"],
         )
+
+    def test_draft_posts_github_and_saves_state_when_icloud_write_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            paths = default_paths(root)
+            paths.data_dir.mkdir(parents=True)
+            paths.dashboard_json.write_text(json.dumps(SAMPLE_DATA), encoding="utf-8")
+            paths.icloud_dir = root / "icloud"
+            paths.icloud_latest = paths.icloud_dir / "latest.md"
+            paths.icloud_dir.mkdir(parents=True)
+            paths.icloud_latest.mkdir()
+
+            with (
+                patch("geosports.recap.default_paths", return_value=paths),
+                patch(
+                    "geosports.recap.recap_config",
+                    return_value={
+                        "GITHUB_TOKEN": "token",
+                        "GITHUB_REPO": "mconno5/crew-geosports-dashboard",
+                        "GITHUB_APPROVAL_ISSUE_NUMBER": "1",
+                    },
+                ),
+                patch("geosports.recap.openai_recap", side_effect=RuntimeError("openai down")),
+                patch("geosports.recap.post_github_draft_notice") as post_notice,
+                patch("geosports.recap.secrets.token_urlsafe", return_value="newtoken"),
+            ):
+                draft_recap(
+                    argparse.Namespace(
+                        if_due=True,
+                        force=True,
+                        replace_pending=True,
+                        run_date="2026-06-29",
+                    )
+                )
+
+            state = load_state(paths.state_json)
+            draft = state["draft"]
+            self.assertEqual(draft["token"], "newtoken")
+            self.assertEqual(draft_status(draft), "pending_review")
+            self.assertEqual(draft["github_status"], "posted")
+            self.assertIn("failed:", draft["icloud_status"])
+            post_notice.assert_called_once()
 
     def test_poll_approval_sends_matching_token_once(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -243,6 +287,25 @@ class RecapTests(unittest.TestCase):
             self.assertIn("Draft status: send_failed", text)
             self.assertIn("Blocks next draft: no", text)
             self.assertIn("Last send error: Messages timed out", text)
+
+    def test_status_reports_orphan_local_draft(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            paths = default_paths(root)
+            paths.data_dir.mkdir(parents=True)
+            paths.recaps_dir.mkdir(parents=True)
+            paths.dashboard_json.write_text(
+                '{"meta":{"recentFormWindow":{"endDate":"2026-06-25"}},"dates":["06-25"],"dailyScores":{"mark":[700]}}',
+                encoding="utf-8",
+            )
+            paths.latest_json.write_text('{"token":"localtoken"}', encoding="utf-8")
+            save_state(paths.state_json, {"draft": {"token": "statetoken", "sent_at": None}})
+
+            output = io.StringIO()
+            with patch("geosports.recap.default_paths", return_value=paths), redirect_stdout(output):
+                status_recap(argparse.Namespace())
+
+            self.assertIn("Orphan local draft detected: localtoken", output.getvalue())
 
 
 if __name__ == "__main__":

@@ -169,6 +169,15 @@ def concise_error(exc: BaseException) -> str:
     return f"{type(exc).__name__}: {exc}"
 
 
+def latest_local_payload(paths: RecapPaths) -> dict:
+    if not paths.latest_json.exists():
+        return {}
+    try:
+        return json.loads(paths.latest_json.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
 def is_recap_day(run_date: date) -> bool:
     return run_date.weekday() in RECAP_DAYS
 
@@ -397,9 +406,8 @@ def approval_issue_number(config: dict[str, str]) -> str:
     return issue
 
 
-def write_review_files(paths: RecapPaths, draft_text: str, payload: dict, config: dict[str, str]) -> None:
+def write_review_files(paths: RecapPaths, draft_text: str, payload: dict, config: dict[str, str]) -> str:
     paths.recaps_dir.mkdir(parents=True, exist_ok=True)
-    paths.icloud_dir.mkdir(parents=True, exist_ok=True)
     paths.latest_txt.write_text(draft_text, encoding="utf-8")
     paths.latest_json.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     issue_num = config.get("GITHUB_APPROVAL_ISSUE_NUMBER", "<issue-number>")
@@ -425,7 +433,12 @@ Comment on the approval issue:
 Approval issue: https://github.com/{repo}/issues/{issue_num}
 Dashboard: {SITE_URL}
 """
-    paths.icloud_latest.write_text(review, encoding="utf-8")
+    try:
+        paths.icloud_dir.mkdir(parents=True, exist_ok=True)
+        paths.icloud_latest.write_text(review, encoding="utf-8")
+        return "posted"
+    except Exception as exc:
+        return f"failed: {concise_error(exc)}"
 
 
 def post_github_draft_notice(config: dict[str, str], payload: dict, draft_text: str) -> None:
@@ -502,7 +515,7 @@ def draft_recap(args: argparse.Namespace) -> int:
         "draft_text": draft_text,
         "facts": facts,
     }
-    write_review_files(paths, draft_text, payload, config)
+    icloud_status = write_review_files(paths, draft_text, payload, config)
     try:
         post_github_draft_notice(config, payload, draft_text)
         github_status = "posted"
@@ -521,6 +534,7 @@ def draft_recap(args: argparse.Namespace) -> int:
                 "expires_at": payload["expires_at"],
                 "draft_path": str(paths.latest_txt),
                 "icloud_path": str(paths.icloud_latest),
+                "icloud_status": icloud_status,
                 "github_status": github_status,
                 "approved_at": None,
                 "sent_at": None,
@@ -536,7 +550,7 @@ def draft_recap(args: argparse.Namespace) -> int:
     )
     save_state(paths.state_json, state)
     print(f"Drafted recap token {token}; GitHub notice {github_status}")
-    print(f"iCloud review file: {paths.icloud_latest}")
+    print(f"iCloud review file: {icloud_status} ({paths.icloud_latest})")
     return 0
 
 
@@ -692,9 +706,13 @@ def status_recap(args: argparse.Namespace) -> int:
     state = load_state(paths.state_json)
     data = load_dashboard(paths.dashboard_json) if paths.dashboard_json.exists() else {}
     draft = state.get("draft") or {}
+    local_payload = latest_local_payload(paths)
     status = draft_status(draft)
     latest = latest_score_date(data)
     blocked = draft_blocks_replacement(draft)
+    orphan_token = None
+    if local_payload.get("token") and local_payload.get("token") != draft.get("token"):
+        orphan_token = local_payload.get("token")
     print(f"Draft status: {status}")
     print(f"Blocks next draft: {'yes' if blocked else 'no'}")
     print(f"Token: {draft.get('token') or '-'}")
@@ -703,11 +721,15 @@ def status_recap(args: argparse.Namespace) -> int:
     print(f"Sent: {draft.get('sent_at') or '-'}")
     print(f"Failed: {draft.get('send_failed_at') or '-'}")
     print(f"Abandoned: {draft.get('abandoned_at') or '-'}")
+    print(f"GitHub status: {draft.get('github_status') or '-'}")
+    print(f"iCloud status: {draft.get('icloud_status') or '-'}")
     print(f"Send attempts: {draft.get('send_attempt_count') or 0}/{MAX_SEND_ATTEMPTS}")
     print(f"Last send error: {draft.get('last_send_error') or '-'}")
     print(f"Latest score date: {latest.isoformat() if latest else '-'}")
     print(f"Last drafted score date: {state.get('last_drafted_latest_score_date') or '-'}")
     print(f"Last due day: {state.get('last_due_day') or '-'}")
+    if orphan_token:
+        print(f"Orphan local draft detected: {orphan_token}")
     return 0
 
 

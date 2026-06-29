@@ -183,6 +183,8 @@ Check the current recap state:
 python3 -m geosports recap status
 ```
 
+The status output includes GitHub/iCloud posting status and warns if a local draft was created but never saved into recap state. iCloud review-file writes are best-effort; GitHub approval comments are the primary mobile approval path.
+
 Send latest local draft directly from the Mac:
 
 ```bash
