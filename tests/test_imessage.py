@@ -10,10 +10,10 @@ class IMessageTests(unittest.TestCase):
     def test_is_reply_or_reaction_detects_associated_and_reply_metadata(self):
         self.assertFalse(is_reply_or_reaction(0, None, None))
         self.assertTrue(is_reply_or_reaction(2000, None, None))
-        self.assertTrue(is_reply_or_reaction(0, "reply-guid", None))
+        self.assertFalse(is_reply_or_reaction(0, "reply-guid", None))
         self.assertTrue(is_reply_or_reaction(0, None, "thread-guid"))
 
-    def test_fetch_messages_skips_reactions_and_replies(self):
+    def test_fetch_messages_keeps_score_posts_with_reply_to_guid_but_skips_reactions_and_inline_replies(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             db_path = Path(temp_dir) / "chat.db"
             conn = sqlite3.connect(db_path)
@@ -57,8 +57,10 @@ class IMessageTests(unittest.TestCase):
 
             messages = fetch_messages(db_path, [99])
 
-        self.assertEqual(len(messages), 1)
-        self.assertEqual(messages[0].message, "+13125550100 GeoSports 700 / 1,000")
+        self.assertEqual([message.message for message in messages], [
+            "+13125550100 GeoSports 700 / 1,000",
+            "+13125550100 GeoSports 702 / 1,000",
+        ])
 
 
 if __name__ == "__main__":

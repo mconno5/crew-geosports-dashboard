@@ -157,7 +157,10 @@ def is_reply_or_reaction(
     reply_to_guid: str | None = None,
     thread_originator_guid: str | None = None,
 ) -> bool:
-    return bool(associated_type or reply_to_guid or thread_originator_guid)
+    # GeoSports score posts from other group members can carry reply_to_guid
+    # even when they are original share messages. Inline replies have
+    # thread_originator_guid, while reactions/tapbacks use associated metadata.
+    return bool(associated_type or thread_originator_guid)
 
 
 def fetch_messages(db_path: Path, chat_ids: list[int]) -> list[RawMessage]:
