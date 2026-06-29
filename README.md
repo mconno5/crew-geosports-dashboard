@@ -177,11 +177,25 @@ Poll approvals manually:
 ./scripts/poll_recap_approvals.sh
 ```
 
+Check the current recap state:
+
+```bash
+python3 -m geosports recap status
+```
+
 Send latest local draft directly from the Mac:
 
 ```bash
 ./scripts/send_latest_recap.sh --token <token>
 ```
+
+If an approved draft gets stuck because Messages fails to send, abandon it so the next normal Monday/Wednesday/Saturday recap can draft fresh data:
+
+```bash
+python3 -m geosports recap abandon --reason "stale approved draft after Messages timeout"
+```
+
+The approval poller retries failed Messages sends a limited number of times. If Messages keeps timing out, the draft is marked failed, a GitHub issue comment is posted when possible, and future scheduled recaps are no longer blocked by that failed draft.
 
 Install the hourly approval poller:
 

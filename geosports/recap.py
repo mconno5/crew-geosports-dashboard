@@ -21,6 +21,8 @@ RECAP_DAYS = {0, 2, 5}  # Monday, Wednesday, Saturday
 TOKEN_TTL_DAYS = 7
 MAX_RECAP_CHARS = 900
 FORM_MIN_GAMES = 3
+MAX_SEND_ATTEMPTS = 3
+SEND_TIMEOUT_SECONDS = 60
 APPROVAL_RE = re.compile(r"(^|\s)/send\s+([A-Za-z0-9_-]+)(\s|$)")
 
 
@@ -37,6 +39,10 @@ class RecapPaths:
     env_file: Path
     icloud_dir: Path
     icloud_latest: Path
+
+
+class RecapSendError(RuntimeError):
+    pass
 
 
 def default_paths(root: Path | None = None) -> RecapPaths:
@@ -139,6 +145,30 @@ def latest_score_date(data: dict) -> date | None:
     return date(year, month, day)
 
 
+def draft_status(draft: dict) -> str:
+    if not draft or not draft.get("token"):
+        return "none"
+    if draft.get("sent_at"):
+        return "sent"
+    if draft.get("abandoned_at"):
+        return "abandoned"
+    if draft.get("send_failed_at"):
+        return "send_failed"
+    if draft.get("approved_at"):
+        return "approved"
+    return "pending_review"
+
+
+def draft_blocks_replacement(draft: dict) -> bool:
+    return draft_status(draft) in {"pending_review", "approved"}
+
+
+def concise_error(exc: BaseException) -> str:
+    if isinstance(exc, RecapSendError):
+        return str(exc)
+    return f"{type(exc).__name__}: {exc}"
+
+
 def is_recap_day(run_date: date) -> bool:
     return run_date.weekday() in RECAP_DAYS
 
@@ -174,7 +204,7 @@ def should_draft(
         return False, "not a recap day"
 
     draft = state.get("draft") or {}
-    if draft and not draft.get("sent_at") and not replace_pending:
+    if draft_blocks_replacement(draft) and not replace_pending:
         return False, "draft already pending"
 
     meta = data.get("meta", {})
@@ -409,6 +439,22 @@ def post_github_draft_notice(config: dict[str, str], payload: dict, draft_text: 
     github_request(config, f"/issues/{issue}/comments", method="POST", body={"body": body})
 
 
+def post_github_send_failure_notice(config: dict[str, str], draft: dict) -> None:
+    issue = approval_issue_number(config)
+    token = draft.get("token", "<unknown>")
+    attempts = draft.get("send_attempt_count", 0)
+    error = draft.get("last_send_error", "unknown error")
+    body = (
+        "GeoSports recap send failed after approval.\n\n"
+        f"Token: `{token}`\n"
+        f"Attempts: {attempts}\n"
+        f"Last error: `{error}`\n\n"
+        "The draft is marked failed so future scheduled recaps can continue. "
+        "The Mac may need Messages opened/signed in, macOS Automation permission, or iCloud sync attention."
+    )
+    github_request(config, f"/issues/{issue}/comments", method="POST", body={"body": body})
+
+
 def draft_recap(args: argparse.Namespace) -> int:
     paths = default_paths()
     config = recap_config(paths)
@@ -479,6 +525,12 @@ def draft_recap(args: argparse.Namespace) -> int:
                 "approved_at": None,
                 "sent_at": None,
                 "approval_comment_id": None,
+                "send_attempt_count": 0,
+                "last_send_attempt_at": None,
+                "last_send_error": None,
+                "send_failed_at": None,
+                "abandoned_at": None,
+                "abandoned_reason": None,
             },
         }
     )
@@ -494,11 +546,45 @@ on run argv
   set messageText to item 1 of argv
   set targetChatId to item 2 of argv
   tell application "Messages"
-    send messageText to chat id targetChatId
+    activate
+    with timeout of 45 seconds
+      send messageText to chat id targetChatId
+    end timeout
   end tell
 end run
 """
-    subprocess.run(["osascript", "-e", script, text, chat_id], check=True)
+    try:
+        subprocess.run(
+            ["osascript", "-e", script, text, chat_id],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=SEND_TIMEOUT_SECONDS,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise RecapSendError(f"Messages AppleScript timed out after {SEND_TIMEOUT_SECONDS}s") from exc
+    except subprocess.CalledProcessError as exc:
+        detail = (exc.stderr or exc.stdout or str(exc)).strip()
+        raise RecapSendError(detail.splitlines()[-1] if detail else "Messages AppleScript failed") from exc
+
+
+def record_send_failure(paths: RecapPaths, state: dict, error: str, config: dict[str, str] | None = None) -> dict:
+    draft = state.get("draft") or {}
+    now = now_utc().isoformat()
+    draft["send_attempt_count"] = int(draft.get("send_attempt_count") or 0) + 1
+    draft["last_send_attempt_at"] = now
+    draft["last_send_error"] = error[:500]
+    if draft["send_attempt_count"] >= MAX_SEND_ATTEMPTS:
+        draft["send_failed_at"] = now
+        if config and not draft.get("send_failure_notice_at"):
+            try:
+                post_github_send_failure_notice(config, draft)
+                draft["send_failure_notice_at"] = now
+            except Exception as exc:
+                draft["send_failure_notice_error"] = concise_error(exc)[:500]
+    state["draft"] = draft
+    save_state(paths.state_json, state)
+    return draft
 
 
 def send_recap(args: argparse.Namespace) -> int:
@@ -510,9 +596,15 @@ def send_recap(args: argparse.Namespace) -> int:
         raise SystemExit("No matching draft token found")
     if draft.get("sent_at") and not args.force:
         raise SystemExit("Draft was already sent")
+    if draft.get("abandoned_at") and not args.force:
+        raise SystemExit("Draft was abandoned")
+    if draft.get("send_failed_at") and not args.force:
+        raise SystemExit("Draft send previously failed")
     expires = draft.get("expires_at")
     if expires and datetime.fromisoformat(expires) < now_utc() and not args.force:
         raise SystemExit("Draft token expired")
+    if int(draft.get("send_attempt_count") or 0) >= MAX_SEND_ATTEMPTS and not args.force:
+        raise SystemExit("Draft reached the send retry limit")
     text = paths.latest_txt.read_text(encoding="utf-8").strip()
     if not args.yes:
         print(text)
@@ -520,11 +612,24 @@ def send_recap(args: argparse.Namespace) -> int:
         if confirmation.lower() != "y":
             print("Send cancelled")
             return 0
-    send_message(text)
+    try:
+        send_message(text)
+    except Exception as exc:
+        config = recap_config(paths)
+        failed = record_send_failure(paths, state, concise_error(exc), config)
+        message = (
+            f"Failed to send recap token {token} "
+            f"({failed.get('send_attempt_count')}/{MAX_SEND_ATTEMPTS} attempts): {failed.get('last_send_error')}"
+        )
+        if args.yes:
+            print(message)
+            return 0
+        raise SystemExit(message) from exc
     sent_at = now_utc().isoformat()
     draft["sent_at"] = sent_at
     if not draft.get("approved_at"):
         draft["approved_at"] = sent_at
+    draft["last_send_error"] = None
     state["draft"] = draft
     state["last_sent_token"] = token
     state["last_sent_at"] = sent_at
@@ -547,6 +652,13 @@ def poll_approvals(args: argparse.Namespace) -> int:
     token = draft.get("token")
     if not token:
         print("No pending draft token")
+        return 0
+    status = draft_status(draft)
+    if status == "abandoned":
+        print("Latest draft was abandoned")
+        return 0
+    if status == "send_failed":
+        print("Latest draft send failed")
         return 0
     if draft.get("sent_at"):
         print("Latest draft already sent")
@@ -575,6 +687,51 @@ def poll_approvals(args: argparse.Namespace) -> int:
     return 0
 
 
+def status_recap(args: argparse.Namespace) -> int:
+    paths = default_paths()
+    state = load_state(paths.state_json)
+    data = load_dashboard(paths.dashboard_json) if paths.dashboard_json.exists() else {}
+    draft = state.get("draft") or {}
+    status = draft_status(draft)
+    latest = latest_score_date(data)
+    blocked = draft_blocks_replacement(draft)
+    print(f"Draft status: {status}")
+    print(f"Blocks next draft: {'yes' if blocked else 'no'}")
+    print(f"Token: {draft.get('token') or '-'}")
+    print(f"Created: {draft.get('created_at') or '-'}")
+    print(f"Approved: {draft.get('approved_at') or '-'}")
+    print(f"Sent: {draft.get('sent_at') or '-'}")
+    print(f"Failed: {draft.get('send_failed_at') or '-'}")
+    print(f"Abandoned: {draft.get('abandoned_at') or '-'}")
+    print(f"Send attempts: {draft.get('send_attempt_count') or 0}/{MAX_SEND_ATTEMPTS}")
+    print(f"Last send error: {draft.get('last_send_error') or '-'}")
+    print(f"Latest score date: {latest.isoformat() if latest else '-'}")
+    print(f"Last drafted score date: {state.get('last_drafted_latest_score_date') or '-'}")
+    print(f"Last due day: {state.get('last_due_day') or '-'}")
+    return 0
+
+
+def abandon_recap(args: argparse.Namespace) -> int:
+    paths = default_paths()
+    state = load_state(paths.state_json)
+    draft = state.get("draft") or {}
+    if not draft.get("token"):
+        print("No draft to abandon")
+        return 0
+    if draft.get("sent_at") and not args.force:
+        raise SystemExit("Refusing to abandon an already-sent draft without --force")
+    if draft.get("abandoned_at") and not args.force:
+        print(f"Draft token {draft.get('token')} was already abandoned")
+        return 0
+    now = now_utc().isoformat()
+    draft["abandoned_at"] = now
+    draft["abandoned_reason"] = args.reason
+    state["draft"] = draft
+    save_state(paths.state_json, state)
+    print(f"Abandoned recap token {draft.get('token')}: {args.reason}")
+    return 0
+
+
 def add_recap_subparser(subparsers) -> None:
     recap_parser = subparsers.add_parser("recap", help="Draft, approve, and send GeoSports recaps.")
     recap_subparsers = recap_parser.add_subparsers(dest="recap_command")
@@ -594,3 +751,11 @@ def add_recap_subparser(subparsers) -> None:
     send_parser.add_argument("--force", action="store_true")
     send_parser.add_argument("--yes", action="store_true")
     send_parser.set_defaults(func=send_recap)
+
+    status_parser = recap_subparsers.add_parser("status", help="Show recap draft and automation state.")
+    status_parser.set_defaults(func=status_recap)
+
+    abandon_parser = recap_subparsers.add_parser("abandon", help="Abandon the current unsent recap draft.")
+    abandon_parser.add_argument("--reason", required=True)
+    abandon_parser.add_argument("--force", action="store_true")
+    abandon_parser.set_defaults(func=abandon_recap)
