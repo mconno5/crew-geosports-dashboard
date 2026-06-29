@@ -98,13 +98,30 @@ class RecapTests(unittest.TestCase):
         self.assertEqual(facts["latest_score_date"], "2026-06-25")
         self.assertEqual(facts["recent_window"]["label"], "June 19 - 25, 2026")
         self.assertEqual(facts["latest_winner"], {"name": "Casey", "score": 900})
+        self.assertEqual(facts["latest_winners"], [{"name": "Casey", "score": 900}])
+        self.assertFalse(facts["latest_is_tie"])
         self.assertEqual(facts["recent_leader"]["name"], "Sanup")
         self.assertNotIn("312555", str(facts))
+
+    def test_fact_pack_identifies_latest_day_ties(self):
+        tied_data = json.loads(json.dumps(SAMPLE_DATA))
+        tied_data["dailyScores"]["mark"][-1] = 900
+        facts = build_fact_pack(tied_data)
+        self.assertTrue(facts["latest_is_tie"])
+        self.assertEqual(facts["latest_winners"], [{"name": "Mark", "score": 900}, {"name": "Casey", "score": 900}])
 
     def test_fallback_recap_includes_site_link(self):
         text = fallback_recap(build_fact_pack(SAMPLE_DATA))
         self.assertIn("https://mconno5.github.io/crew-geosports-dashboard/", text)
         self.assertLessEqual(len(text), 900)
+
+    def test_fallback_recap_calls_out_ties(self):
+        tied_data = json.loads(json.dumps(SAMPLE_DATA))
+        tied_data["dailyScores"]["mark"][-1] = 900
+        text = fallback_recap(build_fact_pack(tied_data))
+        self.assertIn("Shared crown alert", text)
+        self.assertIn("Mark and Casey", text)
+        self.assertIn("900", text)
 
     def test_missing_approval_config_requires_github_mailbox(self):
         self.assertEqual(

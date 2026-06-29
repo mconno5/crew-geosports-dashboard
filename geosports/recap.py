@@ -256,6 +256,8 @@ def build_fact_pack(data: dict) -> dict:
         if score is not None:
             latest_scores.append({"name": player["name"], "score": score})
     latest_scores.sort(key=lambda item: item["score"], reverse=True)
+    top_score = latest_scores[0]["score"] if latest_scores else None
+    latest_winners = [item for item in latest_scores if item["score"] == top_score]
 
     window = meta.get("recentFormWindow") or {}
     window_days = int(window.get("days") or 7)
@@ -292,6 +294,8 @@ def build_fact_pack(data: dict) -> dict:
         "latest_day_label": latest_label,
         "latest_scores": latest_scores,
         "latest_winner": latest_scores[0] if latest_scores else None,
+        "latest_winners": latest_winners,
+        "latest_is_tie": len(latest_winners) > 1,
         "latest_score_count": len(latest_scores),
         "recent_window": window,
         "recent_form": form_rows,
@@ -304,21 +308,27 @@ def build_fact_pack(data: dict) -> dict:
 
 def fallback_recap(facts: dict) -> str:
     latest_winner = facts.get("latest_winner")
+    latest_winners = facts.get("latest_winners") or ([latest_winner] if latest_winner else [])
     recent_leader = facts.get("recent_leader")
     riser = facts.get("biggest_riser")
     window = facts.get("recent_window") or {}
-    parts = ["GeoSports desk has the latest:"]
-    if latest_winner:
+    parts = ["GeoSports desk is live, and the scoreboard has opinions:"]
+    if len(latest_winners) > 1:
+        names = " and ".join(winner["name"] for winner in latest_winners)
         parts.append(
-            f"{latest_winner['name']} took the newest matchday with {latest_winner['score']}."
+            f"Shared crown alert: {names} both posted {latest_winners[0]['score']} on the latest slate."
+        )
+    elif latest_winner:
+        parts.append(
+            f"{latest_winner['name']} grabbed the newest matchday with {latest_winner['score']}."
         )
     if recent_leader:
         parts.append(
-            f"Over {window.get('label', 'the last 7 days')}, {recent_leader['name']} is setting the pace at {recent_leader['recent_avg']} across {recent_leader['games']} games."
+            f"Over {window.get('label', 'the last 7 days')}, {recent_leader['name']} is wearing the form belt at {recent_leader['recent_avg']} across {recent_leader['games']} games."
         )
     if riser and riser.get("delta", 0) > 0:
         parts.append(
-            f"{riser['name']} is the stock-up name at +{riser['delta']} vs season form."
+            f"{riser['name']} is the market mover, up +{riser['delta']} vs season pace."
         )
     parts.append(f"Full board: {SITE_URL}")
     return " ".join(parts)[:MAX_RECAP_CHARS]
@@ -336,9 +346,14 @@ def openai_recap(facts: dict, config: dict[str, str]) -> str:
             {
                 "type": "input_text",
                 "text": (
-                    "Write one friendly, witty sports-broadcast group-chat recap. "
-                    "Use only these facts, do not invent scores or streaks, avoid profanity and mean personal attacks, "
-                    f"include the dashboard link, and stay under {MAX_RECAP_CHARS} characters.\n\n"
+                    "Write one punchy GeoSports group-chat recap with snappy sports-caster energy. "
+                    "Aim for a high-energy Chicago sports-radio / studio-desk vibe: playful, opinionated, dramatic, and funny, "
+                    "but do not imitate or claim to be any specific real broadcaster. "
+                    "Evaluate the latest day winner or co-winners, the seven-day form leader, and one mover/shaker if available. "
+                    "Use only the provided facts. Do not invent scores, streaks, tiebreakers, injuries, rivalries, history, or motives. "
+                    "If latest_is_tie is true, clearly call it a tie and name every player in latest_winners; do not imply one tied player beat the other. "
+                    "Avoid profanity, cruelty, and personal attacks. "
+                    f"Include the dashboard link and stay under {MAX_RECAP_CHARS} characters.\n\n"
                     + json.dumps(facts, ensure_ascii=False, indent=2)
                 ),
             }
