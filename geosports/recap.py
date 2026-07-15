@@ -26,15 +26,15 @@ SEND_TIMEOUT_SECONDS = 60
 VOICE_PROFILES = (
     {
         "id": "hot_desk",
-        "instruction": "Be forceful and decisive, like an original live studio hot-take host. Deliver one sharp verdict without shouting.",
+        "instruction": "Sound like an original live postgame desk host: decisive, lively, and a little incredulous. Open with a sharp verdict and land one clean rhetorical punch.",
     },
     {
         "id": "chicago_columnist",
-        "instruction": "Be dry, wry, and compact, like an original Chicago sports columnist. Use one precise jab, never cruelty.",
+        "instruction": "Sound like an original Chicago sports columnist: dry, knowing, and concise. Work in one wry line about the pecking order, never a personal attack.",
     },
     {
         "id": "color_analyst",
-        "instruction": "Be vivid and celebratory, like an original color analyst. Make the result feel like a moment without exaggerating it.",
+        "instruction": "Sound like an original color analyst: vivid, celebratory, and game-aware. Give the result one fitting sports image without inflating the facts.",
     },
 )
 
@@ -296,17 +296,23 @@ def fallback_recap(facts: dict, voice: dict[str, str] | None = None) -> str:
     winners = facts.get("latest_winners") or []
     leader = facts.get("recent_leader")
     riser = facts.get("biggest_riser")
+    voice_id = (voice or {}).get("id")
     if len(winners) > 1:
-        opening = f"{ ' and '.join(item['name'] for item in winners) } split the latest crown at {winners[0]['score']}; no tiebreaker, no fake controversy."
+        opening = f"No one blinked: { ' and '.join(item['name'] for item in winners) } split the latest crown at {winners[0]['score']}."
     elif winners:
-        opening = f"{winners[0]['name']} took the latest slate with {winners[0]['score']} and left the board chasing."
+        opening = f"Put it on the board: {winners[0]['name']} posted {winners[0]['score']} and took the latest crown."
     else:
         opening = "No fresh slate to call, so the form table gets the spotlight."
     parts = [opening]
     if leader:
-        parts.append(f"Over {facts.get('recent_window', {}).get('label', 'the last seven days')}, {leader['name']} leads at {leader['recent_avg']} across {leader['games']} games.")
+        parts.append(f"Over {facts.get('recent_window', {}).get('label', 'the last seven days')}, {leader['name']} owns the best average at {leader['recent_avg']} across {leader['games']} games.")
     if riser and riser.get("delta", 0) > 0 and (not leader or riser["name"] != leader["name"]):
-        parts.append(f"{riser['name']} is the mover, up {riser['delta']:+d} versus season pace.")
+        if voice_id == "chicago_columnist":
+            parts.append(f"{riser['name']} is up {riser['delta']:+d} versus season pace; the pecking order has been notified.")
+        elif voice_id == "color_analyst":
+            parts.append(f"{riser['name']} is up {riser['delta']:+d} versus season pace and carrying some real momentum.")
+        else:
+            parts.append(f"{riser['name']} is up {riser['delta']:+d} versus season pace. That is how you make the board look twice.")
     parts.append(SITE_URL)
     return " ".join(parts)[:MAX_RECAP_CHARS]
 
@@ -316,13 +322,14 @@ def openai_recap(facts: dict, config: dict[str, str], voice: dict[str, str]) -> 
     if not api_key or not model:
         raise RuntimeError("OPENAI_API_KEY and OPENAI_MODEL are required")
     prompt = (
-        "Write a GeoSports group-chat recap from only the fact JSON below. "
+        "Write a GeoSports group-chat recap from only the fact JSON below. It should read like a compact postgame call, not a spreadsheet. "
         f"{voice['instruction']} "
-        "Use exactly two short sentences plus the dashboard URL as a third line. Target 280-430 characters total. "
-        "Sentence one must name the latest winner, or every co-winner for a tie, and include the score. "
-        "Sentence two must name the seven-day leader and, if available, one riser. "
+        "Use exactly two short, high-energy sentences plus the dashboard URL as a third line. Target 220-360 characters total. "
+        "Sentence one must open with a fresh sports-broadcast hook, then name the latest winner, or every co-winner for a tie, and include the score. "
+        "Sentence two must name the seven-day leader and, if available, one riser, with one original sports-native turn of phrase that earns its place. "
+        "Keep the color as clearly figurative commentary, not a new claim: never imply an unprovided margin, future outcome, player motive, rivalry, or reaction. "
         "No headings, hashtags, emoji, generic greeting, sign-off, profanity, personal attacks, invented facts, or imitation of a real person. "
-        "Avoid these worn phrases: scoreboard has opinions, shared crown alert, form belt, market mover, keep the scores coming, fans. "
+        "Avoid worn or generic phrases including scoreboard has opinions, shared crown alert, form belt, market mover, keep the scores coming, fans, commanding, crushed, leads the pack, biggest riser, the latest contest, leaving the field in the dust, hunger, and challenge the throne. "
         "If latest_is_tie is true, call it a tie plainly and never imply one co-winner beat another.\n\nFACTS:\n"
         + json.dumps(facts, ensure_ascii=False, separators=(",", ":"))
     )
