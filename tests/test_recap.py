@@ -92,6 +92,17 @@ class RecapTests(unittest.TestCase):
                 poll_approvals(argparse.Namespace())
             send.assert_not_called()
 
+    def test_poller_retries_an_already_approved_draft(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            paths = default_paths(Path(tmp))
+            paths.recaps_dir.mkdir(parents=True)
+            paths.latest_txt.write_text("Exact recap", encoding="utf-8")
+            save_state(paths.state_json, {"draft": {"token": "abc", "approval_channel": "imessage", "approval_handle": "+17084088254", "preview_sent_at": "2026-06-25T12:00:00+00:00", "approved_at": "2026-06-25T12:01:00+00:00", "expires_at": "2999-01-01T00:00:00+00:00", "send_attempt_count": 1}})
+            with patch("geosports.recap.default_paths", return_value=paths), patch("geosports.recap.send_message") as send:
+                poll_approvals(argparse.Namespace())
+            send.assert_called_once_with("Exact recap")
+            self.assertEqual(draft_status(load_state(paths.state_json)["draft"]), "sent")
+
     def test_status_reports_direct_channel(self):
         with tempfile.TemporaryDirectory() as tmp:
             paths = default_paths(Path(tmp))

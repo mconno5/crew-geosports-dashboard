@@ -569,6 +569,9 @@ def poll_approvals(args: argparse.Namespace) -> int:
     if status == "preview_send_failed":
         print("Direct Messages preview failed after retry limit")
         return 0
+    if status == "approved":
+        print(f"Retrying approved recap token {draft['token']}")
+        return send_recap(argparse.Namespace(token=draft["token"], force=False, yes=True))
     if not draft.get("preview_sent_at"):
         retry_preview_if_needed(paths, state)
         print("Retried direct Messages preview")
