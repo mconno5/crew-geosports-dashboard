@@ -16,7 +16,7 @@
   <string>/Users/markconnolly/crew-geosports-dashboard</string>
 
   <key>StartInterval</key>
-  <integer>3600</integer>
+  <integer>300</integer>
 
   <key>StandardOutPath</key>
   <string>/Users/markconnolly/crew-geosports-dashboard/logs/geosports-recap-approval.out.log</string>

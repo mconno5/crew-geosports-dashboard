@@ -128,8 +128,7 @@ launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.mark.geosports-dashboa
 
 ## Mobile Recap Drafts
 
-The recap agent can draft a short sports-style message after dashboard publishes.
-Drafting is limited to Monday, Wednesday, and Saturday when new scores exist.
+The recap agent drafts a compact, fact-grounded sports update after a successful dashboard publish. Drafting runs only Monday, Wednesday, Friday, and Sunday, when new scores exist.
 
 Local secret/config file:
 
@@ -148,9 +147,7 @@ Required values:
 ```text
 OPENAI_API_KEY=...
 OPENAI_MODEL=...
-GITHUB_TOKEN=...
-GITHUB_REPO=mconno5/crew-geosports-dashboard
-GITHUB_APPROVAL_ISSUE_NUMBER=...
+RECAP_APPROVAL_HANDLE=+1YOURMOBILENUMBER
 ```
 
 Draft manually:
@@ -159,17 +156,14 @@ Draft manually:
 ./scripts/draft_recap.sh --if-due
 ```
 
-Review from iPhone via iCloud Drive:
+The Mac sends the preview privately to `RECAP_APPROVAL_HANDLE` in Messages. Review it on the phone and reply with exactly one of:
 
 ```text
-iCloud Drive/GeoSports Recaps/latest.md
+APPROVE
+SKIP
 ```
 
-Approve from phone by commenting on the configured GitHub issue:
-
-```text
-/send <token>
-```
+`APPROVE` sends the exact saved recap to The Crew from the Mac. `SKIP` discards it. The approval reply must be sent after the preview; it is recorded so it cannot send twice.
 
 Poll approvals manually:
 
@@ -183,7 +177,7 @@ Check the current recap state:
 python3 -m geosports recap status
 ```
 
-The status output includes GitHub/iCloud posting status and warns if a local draft was created but never saved into recap state. iCloud review-file writes are best-effort; GitHub approval comments are the primary mobile approval path.
+The status output includes the private Messages preview and send status. Drafts expire after 48 hours so an unanswered preview does not block the next scheduled recap.
 
 Send latest local draft directly from the Mac:
 
@@ -191,15 +185,15 @@ Send latest local draft directly from the Mac:
 ./scripts/send_latest_recap.sh --token <token>
 ```
 
-If an approved draft gets stuck because Messages fails to send, abandon it so the next normal Monday/Wednesday/Saturday recap can draft fresh data:
+If an approved draft gets stuck because Messages fails to send, abandon it so the next normal Monday/Wednesday/Friday/Sunday recap can draft fresh data:
 
 ```bash
 python3 -m geosports recap abandon --reason "stale approved draft after Messages timeout"
 ```
 
-The approval poller retries failed Messages sends a limited number of times. If Messages keeps timing out, the draft is marked failed, a GitHub issue comment is posted when possible, and future scheduled recaps are no longer blocked by that failed draft.
+The approval poller checks direct Messages replies every five minutes. It retries a failed private preview a limited number of times; a Crew send still requires a fresh `APPROVE` reply and failures are recorded locally without blocking future recaps.
 
-Install the hourly approval poller:
+Install the five-minute approval poller:
 
 ```bash
 cp launchd/com.mark.geosports-recap-approval.plist ~/Library/LaunchAgents/
