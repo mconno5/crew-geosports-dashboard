@@ -76,6 +76,18 @@ class AggregateTests(unittest.TestCase):
         self.assertEqual(data["dailyScores"]["sam"], [700])
         self.assertEqual(data["meta"]["scoreCount"], 2)
 
+    def test_question_stats_count_green_by_position_and_skip_missing_slots(self):
+        rows = [
+            ScoreRow(datetime(2026, 6, 21, 10, tzinfo=timezone.utc), "Me", 700, "🟢🟡🔴🟢🟡"),
+            ScoreRow(datetime(2026, 6, 22, 10, tzinfo=timezone.utc), "Me", 710, "🟡🟢🟢"),
+        ]
+        stats = build_dashboard_data(rows, CONFIG)["questionStats"]["mark"]
+        self.assertEqual(stats[0], {"question": 1, "green": 1, "attempts": 2, "greenRate": 50})
+        self.assertEqual(stats[1], {"question": 2, "green": 1, "attempts": 2, "greenRate": 50})
+        self.assertEqual(stats[2], {"question": 3, "green": 1, "attempts": 2, "greenRate": 50})
+        self.assertEqual(stats[3], {"question": 4, "green": 1, "attempts": 1, "greenRate": 100})
+        self.assertEqual(stats[4], {"question": 5, "green": 0, "attempts": 1, "greenRate": 0})
+
 
 if __name__ == "__main__":
     unittest.main()

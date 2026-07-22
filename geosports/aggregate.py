@@ -8,6 +8,8 @@ from .config import player_display, player_id
 from .models import ScoreRow
 
 RECENT_FORM_DAYS = 7
+QUESTION_COUNT = 5
+QUESTION_MARKERS = {"🟢", "🟡", "🔴", "⚫", "⬛", "🔵"}
 
 
 def ordinal_day(dt) -> str:
@@ -21,6 +23,34 @@ def display_range(start, end) -> str:
             return f"{start.strftime('%B')} {start.day} - {end.day}, {end.year}"
         return f"{start.strftime('%B')} {start.day} - {end.strftime('%B')} {end.day}, {end.year}"
     return f"{start.strftime('%B')} {start.day}, {start.year} - {end.strftime('%B')} {end.day}, {end.year}"
+
+
+def build_question_stats(
+    by_player: dict[str, list[ScoreRow]], player_rows: list[dict]
+) -> dict[str, list[dict]]:
+    """Summarize green results by emoji position without exposing raw messages."""
+    stats: dict[str, list[dict]] = {}
+    for player in player_rows:
+        totals = [{"green": 0, "attempts": 0} for _ in range(QUESTION_COUNT)]
+        for row in by_player[player["id"]]:
+            for index, marker in enumerate(row.emoji_row[:QUESTION_COUNT]):
+                if marker not in QUESTION_MARKERS:
+                    continue
+                totals[index]["attempts"] += 1
+                if marker == "🟢":
+                    totals[index]["green"] += 1
+        stats[player["id"]] = [
+            {
+                "question": index + 1,
+                "green": total["green"],
+                "attempts": total["attempts"],
+                "greenRate": round(total["green"] / total["attempts"] * 100)
+                if total["attempts"]
+                else None,
+            }
+            for index, total in enumerate(totals)
+        ]
+    return stats
 
 
 def build_dashboard_data(rows: list[ScoreRow], player_config: dict) -> dict:
@@ -89,6 +119,7 @@ def build_dashboard_data(rows: list[ScoreRow], player_config: dict) -> dict:
         player["id"]: [score_by_player_day.get((player["id"], day)) for day in all_dates]
         for player in player_rows
     }
+    question_stats = build_question_stats(by_player, player_rows)
 
     high_pid, high = max(kept_rows, key=lambda item: item[1].score)
     low_pid, low = min(kept_rows, key=lambda item: item[1].score)
@@ -121,4 +152,5 @@ def build_dashboard_data(rows: list[ScoreRow], player_config: dict) -> dict:
         "players": player_rows,
         "dates": [day.strftime("%m-%d") for day in all_dates],
         "dailyScores": daily_scores,
+        "questionStats": question_stats,
     }

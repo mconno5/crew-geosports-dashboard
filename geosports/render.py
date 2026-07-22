@@ -61,8 +61,11 @@ def render_dashboard(template_path: Path, output_path: Path, dashboard_data: dic
     html = re.sub(r"const players = \[.*?\];", js_const("players", dashboard_data["players"]), html, count=1, flags=re.DOTALL)
     html = re.sub(r"const dates = \[.*?\];", js_const("dates", dashboard_data["dates"]), html, count=1, flags=re.DOTALL)
     html = re.sub(
-        r"const dailyScores = \{.*?\};\n\nconst maxAvg",
-        js_const("dailyScores", dashboard_data["dailyScores"]) + "\n\nconst maxAvg",
+        r"const dailyScores = \{.*?\};\n\nconst questionStats = \{.*?\};\n\nconst maxAvg",
+        js_const("dailyScores", dashboard_data["dailyScores"])
+        + "\n\n"
+        + js_const("questionStats", dashboard_data.get("questionStats", {}))
+        + "\n\nconst maxAvg",
         html,
         count=1,
         flags=re.DOTALL,

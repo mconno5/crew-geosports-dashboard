@@ -11,7 +11,7 @@
   :root {
     --bg: #0d0d0f; --surface: #16161a; --surface2: #1e1e24;
     --border: rgba(255,255,255,0.07); --text: #f0ede8;
-    --muted: rgba(240,237,232,0.45); --accent: #e8c84a;
+    --muted: rgba(240,237,232,0.45); --accent: #e8c84a; --green: #4ae8a0;
     --font-display: 'Bebas Neue', sans-serif;
     --font-body: 'DM Sans', sans-serif;
     --font-mono: 'DM Mono', monospace;
@@ -64,6 +64,21 @@
   .player-avg { font-family: var(--font-display); font-size: 26px; letter-spacing: 0.02em; text-align: right; line-height: 1; }
   .player-stat { font-size: 11px; color: var(--muted); font-family: var(--font-mono); text-align: right; line-height: 1.6; }
   .player-games { font-size: 11px; color: var(--muted); font-family: var(--font-mono); text-align: right; }
+  .player-detail { margin-top: 14px; padding: 20px; border: 1px solid rgba(74,232,160,0.3); border-radius: 8px; background: linear-gradient(120deg, rgba(74,232,160,0.08), rgba(255,255,255,0.025)); }
+  .player-detail[hidden] { display: none; }
+  .detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+  .detail-kicker { color: var(--muted); font: 10px var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 4px; }
+  .detail-title { display: flex; align-items: center; gap: 9px; color: var(--text); font: 26px var(--font-display); letter-spacing: 0.03em; }
+  .detail-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .detail-close { border: 1px solid var(--border); border-radius: 4px; background: rgba(255,255,255,0.05); color: var(--muted); cursor: pointer; font: 11px var(--font-mono); padding: 7px 9px; }
+  .detail-close:hover { color: var(--text); border-color: rgba(255,255,255,0.3); }
+  .question-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 9px; }
+  .question-stat { min-width: 0; border: 1px solid var(--border); border-radius: 6px; padding: 11px; background: rgba(13,13,15,0.4); }
+  .question-label { color: var(--muted); font: 10px var(--font-mono); letter-spacing: 0.1em; }
+  .question-rate { color: var(--green); font: 28px var(--font-display); line-height: 1; margin: 7px 0 5px; }
+  .question-count { color: var(--muted); font: 10px var(--font-mono); white-space: nowrap; }
+  .question-bar { height: 4px; margin-top: 10px; border-radius: 3px; overflow: hidden; background: rgba(255,255,255,0.09); }
+  .question-bar > span { display: block; height: 100%; background: var(--green); border-radius: inherit; }
   .spark { display: block; }
   .form-cell { text-align: center; }
   .form-chip { display: inline-block; font-family: var(--font-mono); font-size: 11px; padding: 3px 8px; border-radius: 10px; background: rgba(255,255,255,0.07); color: var(--muted); white-space: nowrap; }
@@ -92,6 +107,8 @@
     .player-row { grid-template-columns: 24px 1fr auto auto; }
     .player-stat, .player-games, .spark { display: none; }
     .header::before { font-size: 80px; }
+    .question-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .question-stat:last-child { grid-column: span 2; }
   }
 </style>
 </head>
@@ -167,6 +184,16 @@
       </div>
     </div>
     <div class="leaderboard" id="leaderboard"></div>
+    <section class="player-detail" id="playerDetail" hidden aria-live="polite" aria-label="Selected player question performance">
+      <div class="detail-head">
+        <div>
+          <div class="detail-kicker">All-time green rate</div>
+          <div class="detail-title" id="detailTitle"></div>
+        </div>
+        <button class="detail-close" id="detailClose" type="button" aria-label="Close player breakdown">close</button>
+      </div>
+      <div class="question-grid" id="questionGrid"></div>
+    </section>
   </div>
 
   <div class="section">
@@ -192,13 +219,13 @@
 
 <div class="footer">
   <span>geosports.app · The Crew group chat</span>
-  <span>Generated July 21, 2026</span>
+  <span>Generated July 22, 2026</span>
 </div>
 
 <script>
 const reportMeta = {
   "dateRange": "May 9 - July 16, 2026",
-  "generatedLabel": "July 21, 2026",
+  "generatedLabel": "July 22, 2026",
   "playerCount": 8,
   "scoreCount": 410,
   "groupAverage": 722,
@@ -938,6 +965,265 @@ const dailyScores = {
   ]
 };
 
+const questionStats = {
+  "sanup": [
+    {
+      "question": 1,
+      "green": 46,
+      "attempts": 68,
+      "greenRate": 68
+    },
+    {
+      "question": 2,
+      "green": 44,
+      "attempts": 68,
+      "greenRate": 65
+    },
+    {
+      "question": 3,
+      "green": 41,
+      "attempts": 68,
+      "greenRate": 60
+    },
+    {
+      "question": 4,
+      "green": 35,
+      "attempts": 68,
+      "greenRate": 51
+    },
+    {
+      "question": 5,
+      "green": 32,
+      "attempts": 68,
+      "greenRate": 47
+    }
+  ],
+  "cam": [
+    {
+      "question": 1,
+      "green": 10,
+      "attempts": 20,
+      "greenRate": 50
+    },
+    {
+      "question": 2,
+      "green": 12,
+      "attempts": 20,
+      "greenRate": 60
+    },
+    {
+      "question": 3,
+      "green": 9,
+      "attempts": 20,
+      "greenRate": 45
+    },
+    {
+      "question": 4,
+      "green": 5,
+      "attempts": 19,
+      "greenRate": 26
+    },
+    {
+      "question": 5,
+      "green": 5,
+      "attempts": 19,
+      "greenRate": 26
+    }
+  ],
+  "casey": [
+    {
+      "question": 1,
+      "green": 27,
+      "attempts": 65,
+      "greenRate": 42
+    },
+    {
+      "question": 2,
+      "green": 28,
+      "attempts": 65,
+      "greenRate": 43
+    },
+    {
+      "question": 3,
+      "green": 22,
+      "attempts": 65,
+      "greenRate": 34
+    },
+    {
+      "question": 4,
+      "green": 14,
+      "attempts": 65,
+      "greenRate": 22
+    },
+    {
+      "question": 5,
+      "green": 10,
+      "attempts": 65,
+      "greenRate": 15
+    }
+  ],
+  "mark": [
+    {
+      "question": 1,
+      "green": 31,
+      "attempts": 68,
+      "greenRate": 46
+    },
+    {
+      "question": 2,
+      "green": 30,
+      "attempts": 68,
+      "greenRate": 44
+    },
+    {
+      "question": 3,
+      "green": 23,
+      "attempts": 68,
+      "greenRate": 34
+    },
+    {
+      "question": 4,
+      "green": 13,
+      "attempts": 68,
+      "greenRate": 19
+    },
+    {
+      "question": 5,
+      "green": 13,
+      "attempts": 68,
+      "greenRate": 19
+    }
+  ],
+  "tyler": [
+    {
+      "question": 1,
+      "green": 10,
+      "attempts": 23,
+      "greenRate": 43
+    },
+    {
+      "question": 2,
+      "green": 13,
+      "attempts": 23,
+      "greenRate": 57
+    },
+    {
+      "question": 3,
+      "green": 7,
+      "attempts": 23,
+      "greenRate": 30
+    },
+    {
+      "question": 4,
+      "green": 11,
+      "attempts": 23,
+      "greenRate": 48
+    },
+    {
+      "question": 5,
+      "green": 2,
+      "attempts": 23,
+      "greenRate": 9
+    }
+  ],
+  "matt": [
+    {
+      "question": 1,
+      "green": 25,
+      "attempts": 63,
+      "greenRate": 40
+    },
+    {
+      "question": 2,
+      "green": 21,
+      "attempts": 63,
+      "greenRate": 33
+    },
+    {
+      "question": 3,
+      "green": 20,
+      "attempts": 63,
+      "greenRate": 32
+    },
+    {
+      "question": 4,
+      "green": 16,
+      "attempts": 63,
+      "greenRate": 25
+    },
+    {
+      "question": 5,
+      "green": 12,
+      "attempts": 63,
+      "greenRate": 19
+    }
+  ],
+  "vince": [
+    {
+      "question": 1,
+      "green": 25,
+      "attempts": 63,
+      "greenRate": 40
+    },
+    {
+      "question": 2,
+      "green": 23,
+      "attempts": 63,
+      "greenRate": 37
+    },
+    {
+      "question": 3,
+      "green": 15,
+      "attempts": 63,
+      "greenRate": 24
+    },
+    {
+      "question": 4,
+      "green": 12,
+      "attempts": 63,
+      "greenRate": 19
+    },
+    {
+      "question": 5,
+      "green": 8,
+      "attempts": 63,
+      "greenRate": 13
+    }
+  ],
+  "connor": [
+    {
+      "question": 1,
+      "green": 12,
+      "attempts": 40,
+      "greenRate": 30
+    },
+    {
+      "question": 2,
+      "green": 10,
+      "attempts": 40,
+      "greenRate": 25
+    },
+    {
+      "question": 3,
+      "green": 8,
+      "attempts": 40,
+      "greenRate": 20
+    },
+    {
+      "question": 4,
+      "green": 7,
+      "attempts": 40,
+      "greenRate": 18
+    },
+    {
+      "question": 5,
+      "green": 7,
+      "attempts": 40,
+      "greenRate": 18
+    }
+  ]
+};
+
 const maxAvg = players[0].avg;
 let activePlayer = null;
 let filterActive = false;
@@ -1094,6 +1380,27 @@ function leaderboardOrder() {
 }
 
 const lb = document.getElementById('leaderboard');
+const playerDetail = document.getElementById('playerDetail');
+const detailTitle = document.getElementById('detailTitle');
+const questionGrid = document.getElementById('questionGrid');
+
+function renderPlayerDetail() {
+  if (!activePlayer) {
+    playerDetail.hidden = true;
+    return;
+  }
+  const player = players.find(p => p.id === activePlayer);
+  if (!player) return;
+  playerDetail.hidden = false;
+  detailTitle.innerHTML = `<span class="detail-dot" style="background:${player.color}"></span>${player.name} · question breakdown`;
+  questionGrid.innerHTML = (questionStats[player.id] || []).map(stat => {
+    const rate = stat.greenRate == null ? '—' : `${stat.greenRate}%`;
+    const count = stat.attempts ? `${stat.green} / ${stat.attempts} green` : 'no results';
+    const width = stat.greenRate == null ? 0 : stat.greenRate;
+    return `<div class="question-stat"><div class="question-label">Q${stat.question}</div><div class="question-rate">${rate}</div><div class="question-count">${count}</div><div class="question-bar"><span style="width:${width}%"></span></div></div>`;
+  }).join('');
+}
+
 function renderLeaderboard() {
   lb.innerHTML = '';
   leaderboardOrder().forEach((p, i) => {
@@ -1102,6 +1409,9 @@ function renderLeaderboard() {
     row.className = `player-row rank-${i+1}`;
     row.dataset.id = p.id;
     row.dataset.count = p.count;
+    row.setAttribute('role', 'button');
+    row.setAttribute('tabindex', '0');
+    row.setAttribute('aria-label', `Show ${p.name}'s question performance`);
     const badge = p.count < 10 ? `<span class="small-badge">${p.count} games</span>` : '';
     const crowns = fs.wins > 0 ? `<span class="crowns" title="daily wins, last ${FORM_DAYS} days">👑×${fs.wins}</span>` : '';
     const showFormAvg = sortByForm && fs.games > 0;
@@ -1117,6 +1427,12 @@ function renderLeaderboard() {
       <div class="player-games">${p.count} games</div>
       <div class="player-avg" style="color:${p.color}">${showFormAvg ? fs.recentAvg : p.avg}${avgNote}</div>`;
     row.addEventListener('click', () => toggleHighlight(p.id));
+    row.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        toggleHighlight(p.id);
+      }
+    });
     lb.appendChild(row);
   });
   applyFilter();
@@ -1264,7 +1580,13 @@ function applyHighlight() {
   });
   barChart.update('none');
   lineChart.update('none');
+  renderPlayerDetail();
 }
+
+document.getElementById('detailClose').addEventListener('click', () => {
+  activePlayer = null;
+  applyHighlight();
+});
 </script>
 </body>
 </html>
