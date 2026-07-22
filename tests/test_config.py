@@ -87,6 +87,9 @@ class AggregateTests(unittest.TestCase):
         self.assertEqual(stats[2], {"question": 3, "green": 1, "attempts": 2, "greenRate": 50})
         self.assertEqual(stats[3], {"question": 4, "green": 1, "attempts": 1, "greenRate": 100})
         self.assertEqual(stats[4], {"question": 5, "green": 0, "attempts": 1, "greenRate": 0})
+        group = build_dashboard_data(rows, CONFIG)["groupQuestionStats"]
+        self.assertEqual(group[0], {"question": 1, "green": 1, "attempts": 2, "greenRate": 50})
+        self.assertEqual(group[3], {"question": 4, "green": 1, "attempts": 1, "greenRate": 100})
 
 
 if __name__ == "__main__":

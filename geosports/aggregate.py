@@ -53,6 +53,23 @@ def build_question_stats(
     return stats
 
 
+def build_group_question_stats(question_stats: dict[str, list[dict]]) -> list[dict]:
+    """Build weighted group rates so every recorded question attempt counts once."""
+    group_stats = []
+    for index in range(QUESTION_COUNT):
+        green = sum(stats[index]["green"] for stats in question_stats.values())
+        attempts = sum(stats[index]["attempts"] for stats in question_stats.values())
+        group_stats.append(
+            {
+                "question": index + 1,
+                "green": green,
+                "attempts": attempts,
+                "greenRate": round(green / attempts * 100) if attempts else None,
+            }
+        )
+    return group_stats
+
+
 def build_dashboard_data(rows: list[ScoreRow], player_config: dict) -> dict:
     if not rows:
         generated = datetime.now(timezone.utc).date().isoformat()
@@ -70,6 +87,8 @@ def build_dashboard_data(rows: list[ScoreRow], player_config: dict) -> dict:
             "players": [],
             "dates": [],
             "dailyScores": {},
+            "questionStats": {},
+            "groupQuestionStats": [],
         }
 
     sorted_rows = sorted(rows, key=lambda r: r.timestamp)
@@ -120,6 +139,7 @@ def build_dashboard_data(rows: list[ScoreRow], player_config: dict) -> dict:
         for player in player_rows
     }
     question_stats = build_question_stats(by_player, player_rows)
+    group_question_stats = build_group_question_stats(question_stats)
 
     high_pid, high = max(kept_rows, key=lambda item: item[1].score)
     low_pid, low = min(kept_rows, key=lambda item: item[1].score)
@@ -153,4 +173,5 @@ def build_dashboard_data(rows: list[ScoreRow], player_config: dict) -> dict:
         "dates": [day.strftime("%m-%d") for day in all_dates],
         "dailyScores": daily_scores,
         "questionStats": question_stats,
+        "groupQuestionStats": group_question_stats,
     }

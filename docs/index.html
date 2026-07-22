@@ -77,6 +77,8 @@
   .question-label { color: var(--muted); font: 10px var(--font-mono); letter-spacing: 0.1em; }
   .question-rate { color: var(--green); font: 28px var(--font-display); line-height: 1; margin: 7px 0 5px; }
   .question-count { color: var(--muted); font: 10px var(--font-mono); white-space: nowrap; }
+  .question-benchmark { margin-top: 5px; color: var(--muted); font: 9px var(--font-mono); white-space: nowrap; }
+  .question-delta { font-weight: 500; }
   .question-bar { height: 4px; margin-top: 10px; border-radius: 3px; overflow: hidden; background: rgba(255,255,255,0.09); }
   .question-bar > span { display: block; height: 100%; background: var(--green); border-radius: inherit; }
   .spark { display: block; }
@@ -1224,6 +1226,39 @@ const questionStats = {
   ]
 };
 
+const groupQuestionStats = [
+  {
+    "question": 1,
+    "green": 186,
+    "attempts": 410,
+    "greenRate": 45
+  },
+  {
+    "question": 2,
+    "green": 181,
+    "attempts": 410,
+    "greenRate": 44
+  },
+  {
+    "question": 3,
+    "green": 145,
+    "attempts": 410,
+    "greenRate": 35
+  },
+  {
+    "question": 4,
+    "green": 113,
+    "attempts": 409,
+    "greenRate": 28
+  },
+  {
+    "question": 5,
+    "green": 89,
+    "attempts": 409,
+    "greenRate": 22
+  }
+];
+
 const maxAvg = players[0].avg;
 let activePlayer = null;
 let filterActive = false;
@@ -1384,6 +1419,13 @@ const playerDetail = document.getElementById('playerDetail');
 const detailTitle = document.getElementById('detailTitle');
 const questionGrid = document.getElementById('questionGrid');
 
+function comparisonColor(delta) {
+  if (delta == null) return 'rgba(240,237,232,0.45)';
+  const clamped = Math.max(-20, Math.min(20, delta));
+  const hue = Math.round(((clamped + 20) / 40) * 120);
+  return `hsl(${hue} 78% 62%)`;
+}
+
 function renderPlayerDetail() {
   if (!activePlayer) {
     playerDetail.hidden = true;
@@ -1393,11 +1435,15 @@ function renderPlayerDetail() {
   if (!player) return;
   playerDetail.hidden = false;
   detailTitle.innerHTML = `<span class="detail-dot" style="background:${player.color}"></span>${player.name} · question breakdown`;
-  questionGrid.innerHTML = (questionStats[player.id] || []).map(stat => {
+  questionGrid.innerHTML = (questionStats[player.id] || []).map((stat, index) => {
+    const groupStat = groupQuestionStats[index] || {};
     const rate = stat.greenRate == null ? '—' : `${stat.greenRate}%`;
     const count = stat.attempts ? `${stat.green} / ${stat.attempts} green` : 'no results';
     const width = stat.greenRate == null ? 0 : stat.greenRate;
-    return `<div class="question-stat"><div class="question-label">Q${stat.question}</div><div class="question-rate">${rate}</div><div class="question-count">${count}</div><div class="question-bar"><span style="width:${width}%"></span></div></div>`;
+    const delta = stat.greenRate == null || groupStat.greenRate == null ? null : stat.greenRate - groupStat.greenRate;
+    const deltaLabel = delta == null ? 'group avg —' : `group ${groupStat.greenRate}% · <span class="question-delta">${delta >= 0 ? '+' : ''}${delta} pts</span>`;
+    const color = comparisonColor(delta);
+    return `<div class="question-stat" style="border-color:${color}66"><div class="question-label">Q${stat.question}</div><div class="question-rate" style="color:${color}">${rate}</div><div class="question-count">${count}</div><div class="question-benchmark">${deltaLabel}</div><div class="question-bar"><span style="width:${width}%;background:${color}"></span></div></div>`;
   }).join('');
 }
 
