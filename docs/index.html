@@ -120,7 +120,7 @@
   <div class="container" style="padding-top:0; padding-bottom:0;">
     <div class="header-eyebrow">The Crew · Weekly Wrap</div>
     <div class="header-title">GeoSports<br>Report</div>
-    <div class="header-sub">May 9 - July 16, 2026 &nbsp;·&nbsp; 8 players &nbsp;·&nbsp; 410 scores logged</div>
+    <div class="header-sub">May 9 - July 23, 2026 &nbsp;·&nbsp; 8 players &nbsp;·&nbsp; 413 scores logged</div>
   </div>
 </div>
 
@@ -136,7 +136,7 @@
       </div>
       <div class="stat-card">
         <div class="stat-label">Games played</div>
-        <div class="stat-val">410</div>
+        <div class="stat-val">413</div>
         <div class="stat-sub">across 8 players</div>
       </div>
       <div class="stat-card">
@@ -221,15 +221,15 @@
 
 <div class="footer">
   <span>geosports.app · The Crew group chat</span>
-  <span>Generated July 22, 2026</span>
+  <span>Generated July 23, 2026</span>
 </div>
 
 <script>
 const reportMeta = {
-  "dateRange": "May 9 - July 16, 2026",
-  "generatedLabel": "July 22, 2026",
+  "dateRange": "May 9 - July 23, 2026",
+  "generatedLabel": "July 23, 2026",
   "playerCount": 8,
-  "scoreCount": 410,
+  "scoreCount": 413,
   "groupAverage": 722,
   "highScore": {
     "score": 988,
@@ -243,9 +243,9 @@ const reportMeta = {
   },
   "recentFormWindow": {
     "days": 7,
-    "startDate": "2026-07-10",
-    "endDate": "2026-07-16",
-    "label": "July 10 - 16, 2026"
+    "startDate": "2026-07-17",
+    "endDate": "2026-07-23",
+    "label": "July 17 - 23, 2026"
   }
 };
 
@@ -253,8 +253,8 @@ const players = [
   {
     "id": "sanup",
     "name": "Sanup",
-    "avg": 846,
-    "count": 68,
+    "avg": 843,
+    "count": 69,
     "best": 988,
     "worst": 541,
     "color": "#4ae8a0"
@@ -271,8 +271,8 @@ const players = [
   {
     "id": "casey",
     "name": "Casey",
-    "avg": 714,
-    "count": 65,
+    "avg": 715,
+    "count": 66,
     "best": 913,
     "worst": 416,
     "color": "#e8734a"
@@ -308,7 +308,7 @@ const players = [
     "id": "vince",
     "name": "Vince",
     "avg": 692,
-    "count": 63,
+    "count": 64,
     "best": 873,
     "worst": 376,
     "color": "#c4a84a"
@@ -393,7 +393,14 @@ const dates = [
   "07-13",
   "07-14",
   "07-15",
-  "07-16"
+  "07-16",
+  "07-17",
+  "07-18",
+  "07-19",
+  "07-20",
+  "07-21",
+  "07-22",
+  "07-23"
 ];
 
 const dailyScores = {
@@ -466,7 +473,14 @@ const dailyScores = {
     872,
     902,
     686,
-    945
+    945,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    640
   ],
   "cam": [
     null,
@@ -537,6 +551,13 @@ const dailyScores = {
     667,
     560,
     541,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
     null
   ],
   "casey": [
@@ -608,7 +629,14 @@ const dailyScores = {
     833,
     625,
     560,
-    826
+    826,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    789
   ],
   "mark": [
     702,
@@ -679,7 +707,14 @@ const dailyScores = {
     885,
     569,
     554,
-    852
+    852,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
   ],
   "tyler": [
     null,
@@ -750,6 +785,13 @@ const dailyScores = {
     null,
     null,
     780,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
     null
   ],
   "matt": [
@@ -821,7 +863,14 @@ const dailyScores = {
     905,
     661,
     521,
-    802
+    802,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
   ],
   "vince": [
     null,
@@ -892,7 +941,14 @@ const dailyScores = {
     838,
     623,
     559,
-    839
+    839,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    646
   ],
   "connor": [
     null,
@@ -963,7 +1019,14 @@ const dailyScores = {
     687,
     653,
     561,
-    740
+    740,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
   ]
 };
 
@@ -972,32 +1035,32 @@ const questionStats = {
     {
       "question": 1,
       "green": 46,
-      "attempts": 68,
-      "greenRate": 68
+      "attempts": 69,
+      "greenRate": 67
     },
     {
       "question": 2,
-      "green": 44,
-      "attempts": 68,
+      "green": 45,
+      "attempts": 69,
       "greenRate": 65
     },
     {
       "question": 3,
-      "green": 41,
-      "attempts": 68,
-      "greenRate": 60
+      "green": 42,
+      "attempts": 69,
+      "greenRate": 61
     },
     {
       "question": 4,
       "green": 35,
-      "attempts": 68,
+      "attempts": 69,
       "greenRate": 51
     },
     {
       "question": 5,
       "green": 32,
-      "attempts": 68,
-      "greenRate": 47
+      "attempts": 69,
+      "greenRate": 46
     }
   ],
   "cam": [
@@ -1035,32 +1098,32 @@ const questionStats = {
   "casey": [
     {
       "question": 1,
-      "green": 27,
-      "attempts": 65,
+      "green": 28,
+      "attempts": 66,
       "greenRate": 42
     },
     {
       "question": 2,
-      "green": 28,
-      "attempts": 65,
-      "greenRate": 43
+      "green": 29,
+      "attempts": 66,
+      "greenRate": 44
     },
     {
       "question": 3,
       "green": 22,
-      "attempts": 65,
-      "greenRate": 34
+      "attempts": 66,
+      "greenRate": 33
     },
     {
       "question": 4,
       "green": 14,
-      "attempts": 65,
-      "greenRate": 22
+      "attempts": 66,
+      "greenRate": 21
     },
     {
       "question": 5,
       "green": 10,
-      "attempts": 65,
+      "attempts": 66,
       "greenRate": 15
     }
   ],
@@ -1164,32 +1227,32 @@ const questionStats = {
     {
       "question": 1,
       "green": 25,
-      "attempts": 63,
-      "greenRate": 40
+      "attempts": 64,
+      "greenRate": 39
     },
     {
       "question": 2,
-      "green": 23,
-      "attempts": 63,
-      "greenRate": 37
+      "green": 24,
+      "attempts": 64,
+      "greenRate": 38
     },
     {
       "question": 3,
-      "green": 15,
-      "attempts": 63,
-      "greenRate": 24
+      "green": 16,
+      "attempts": 64,
+      "greenRate": 25
     },
     {
       "question": 4,
       "green": 12,
-      "attempts": 63,
+      "attempts": 64,
       "greenRate": 19
     },
     {
       "question": 5,
       "green": 8,
-      "attempts": 63,
-      "greenRate": 13
+      "attempts": 64,
+      "greenRate": 12
     }
   ],
   "connor": [
@@ -1229,32 +1292,32 @@ const questionStats = {
 const groupQuestionStats = [
   {
     "question": 1,
-    "green": 186,
-    "attempts": 410,
+    "green": 187,
+    "attempts": 413,
     "greenRate": 45
   },
   {
     "question": 2,
-    "green": 181,
-    "attempts": 410,
-    "greenRate": 44
+    "green": 184,
+    "attempts": 413,
+    "greenRate": 45
   },
   {
     "question": 3,
-    "green": 145,
-    "attempts": 410,
-    "greenRate": 35
+    "green": 147,
+    "attempts": 413,
+    "greenRate": 36
   },
   {
     "question": 4,
     "green": 113,
-    "attempts": 409,
-    "greenRate": 28
+    "attempts": 412,
+    "greenRate": 27
   },
   {
     "question": 5,
     "green": 89,
-    "attempts": 409,
+    "attempts": 412,
     "greenRate": 22
   }
 ];
