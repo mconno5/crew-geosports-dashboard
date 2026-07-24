@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 from .aggregate import build_dashboard_data
+from .backfill import BackfillValidationError, merge_score_sources, read_backfill_scores
 from .config import load_player_config
 from .imessage import DB_PATH, MessagesDatabaseError, fetch_messages, resolve_chat_ids
 from .io import read_scores_csv, write_raw_csv, write_scores_csv
@@ -17,6 +18,7 @@ DEFAULT_DATA_DIR = ROOT / "data"
 DEFAULT_DIST_DIR = ROOT / "dist"
 DEFAULT_PLAYERS = ROOT / "config" / "players.json"
 DEFAULT_TEMPLATE = ROOT / "dashboard.html"
+DEFAULT_BACKFILL = DEFAULT_DATA_DIR / "geosports_backfill.local.csv"
 
 
 def parse_chat_ids(values: list[str] | None) -> list[int] | None:
@@ -37,6 +39,8 @@ def build(args: argparse.Namespace) -> None:
         scores = read_scores_csv(Path(args.input_csv))
         raw_count = 0
         parsed_count = len(scores)
+        message_score_count = len(scores)
+        source_result = None
     else:
         try:
             chat_ids = resolve_chat_ids(Path(args.db), args.chat_name, parse_chat_ids(args.chat_id))
@@ -44,7 +48,14 @@ def build(args: argparse.Namespace) -> None:
         except MessagesDatabaseError as exc:
             raise SystemExit(str(exc)) from exc
         parsed = parse_messages(raw_messages)
-        scores = dedupe_scores(parsed)
+        message_scores = dedupe_scores(parsed)
+        message_score_count = len(message_scores)
+        try:
+            backfill_scores = read_backfill_scores(Path(args.backfill), player_config)
+        except BackfillValidationError as exc:
+            raise SystemExit(f"Invalid private backfill reference: {exc}") from exc
+        source_result = merge_score_sources(message_scores, backfill_scores, player_config)
+        scores = source_result.rows
         raw_count = len(raw_messages)
         parsed_count = len(parsed)
         write_raw_csv(data_dir / "geosports_scores.csv", raw_messages)
@@ -58,9 +69,20 @@ def build(args: argparse.Namespace) -> None:
     output_path = dist_dir / "dashboard.html"
     render_dashboard(Path(args.template), output_path, dashboard_data)
 
-    removed = parsed_count - len(scores)
+    removed = parsed_count - message_score_count
     print(f"Raw GeoSports messages: {raw_count}")
-    print(f"Parsed scores: {parsed_count} -> {len(scores)} after dedupe (removed {removed})")
+    print(f"Parsed Messages scores: {parsed_count} -> {message_score_count} after dedupe (removed {removed})")
+    if source_result:
+        print(
+            "Sources: "
+            f"Messages accepted={source_result.messages_accepted}; "
+            f"reference accepted={source_result.backfill_accepted}; "
+            f"collisions skipped={source_result.collisions_skipped}; "
+            f"conflicts={len(source_result.conflicts)}"
+        )
+        print(f"Combined dashboard scores: {len(scores)}")
+        for conflict in source_result.conflicts:
+            print(f"WARNING: Messages retained over private reference for {conflict}")
     print(f"Data: {data_path}")
     print(f"Report: {output_path}")
 
@@ -87,6 +109,11 @@ def main() -> None:
     build_parser.add_argument("--data-dir", default=str(DEFAULT_DATA_DIR))
     build_parser.add_argument("--dist-dir", default=str(DEFAULT_DIST_DIR))
     build_parser.add_argument("--input-csv", help="Skip iMessage extraction and build from an existing parsed CSV.")
+    build_parser.add_argument(
+        "--backfill",
+        default=str(DEFAULT_BACKFILL),
+        help="Private date-only backfill CSV; ignored when --input-csv is used.",
+    )
     build_parser.set_defaults(func=build)
 
     render_parser = subparsers.add_parser("render", help="Render the dashboard from an existing parsed CSV.")

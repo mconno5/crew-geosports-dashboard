@@ -63,6 +63,9 @@ def player_id(sender: str, config: dict) -> str:
     slug = config["senders"].get(normalized)
     if slug:
         return slug
+    # Private reference rows identify players by their already-public slug.
+    if normalized in config["players"]:
+        return normalized
     digest = hashlib.sha1(normalized.encode("utf-8")).hexdigest()[:8]
     return f"player-{digest}"
 

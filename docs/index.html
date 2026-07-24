@@ -120,7 +120,7 @@
   <div class="container" style="padding-top:0; padding-bottom:0;">
     <div class="header-eyebrow">The Crew · Weekly Wrap</div>
     <div class="header-title">GeoSports<br>Report</div>
-    <div class="header-sub">May 9 - July 23, 2026 &nbsp;·&nbsp; 8 players &nbsp;·&nbsp; 413 scores logged</div>
+    <div class="header-sub">May 9 - July 24, 2026 &nbsp;·&nbsp; 8 players &nbsp;·&nbsp; 460 scores logged</div>
   </div>
 </div>
 
@@ -131,12 +131,12 @@
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-label">Group avg</div>
-        <div class="stat-val">722</div>
+        <div class="stat-val">727</div>
         <div class="stat-sub">out of 1,000</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Games played</div>
-        <div class="stat-val">413</div>
+        <div class="stat-val">460</div>
         <div class="stat-sub">across 8 players</div>
       </div>
       <div class="stat-card">
@@ -221,16 +221,16 @@
 
 <div class="footer">
   <span>geosports.app · The Crew group chat</span>
-  <span>Generated July 23, 2026</span>
+  <span>Generated July 24, 2026</span>
 </div>
 
 <script>
 const reportMeta = {
-  "dateRange": "May 9 - July 23, 2026",
-  "generatedLabel": "July 23, 2026",
+  "dateRange": "May 9 - July 24, 2026",
+  "generatedLabel": "July 24, 2026",
   "playerCount": 8,
-  "scoreCount": 413,
-  "groupAverage": 722,
+  "scoreCount": 460,
+  "groupAverage": 727,
   "highScore": {
     "score": 988,
     "player": "Sanup",
@@ -243,9 +243,9 @@ const reportMeta = {
   },
   "recentFormWindow": {
     "days": 7,
-    "startDate": "2026-07-17",
-    "endDate": "2026-07-23",
-    "label": "July 17 - 23, 2026"
+    "startDate": "2026-07-18",
+    "endDate": "2026-07-24",
+    "label": "July 18 - 24, 2026"
   }
 };
 
@@ -253,8 +253,8 @@ const players = [
   {
     "id": "sanup",
     "name": "Sanup",
-    "avg": 843,
-    "count": 69,
+    "avg": 847,
+    "count": 76,
     "best": 988,
     "worst": 541,
     "color": "#4ae8a0"
@@ -262,8 +262,8 @@ const players = [
   {
     "id": "cam",
     "name": "Cam",
-    "avg": 725,
-    "count": 20,
+    "avg": 721,
+    "count": 26,
     "best": 987,
     "worst": 0,
     "color": "#4ae8e8"
@@ -271,20 +271,38 @@ const players = [
   {
     "id": "casey",
     "name": "Casey",
-    "avg": 715,
-    "count": 66,
-    "best": 913,
+    "avg": 719,
+    "count": 73,
+    "best": 916,
     "worst": 416,
     "color": "#e8734a"
   },
   {
+    "id": "vince",
+    "name": "Vince",
+    "avg": 704,
+    "count": 71,
+    "best": 890,
+    "worst": 376,
+    "color": "#c4a84a"
+  },
+  {
     "id": "mark",
     "name": "Mark",
-    "avg": 700,
-    "count": 68,
+    "avg": 703,
+    "count": 76,
     "best": 904,
     "worst": 426,
     "color": "#4a9ee8"
+  },
+  {
+    "id": "matt",
+    "name": "Matt",
+    "avg": 702,
+    "count": 67,
+    "best": 905,
+    "worst": 357,
+    "color": "#a04ae8"
   },
   {
     "id": "tyler",
@@ -296,28 +314,10 @@ const players = [
     "color": "#e84a8a"
   },
   {
-    "id": "matt",
-    "name": "Matt",
-    "avg": 698,
-    "count": 63,
-    "best": 905,
-    "worst": 357,
-    "color": "#a04ae8"
-  },
-  {
-    "id": "vince",
-    "name": "Vince",
-    "avg": 692,
-    "count": 64,
-    "best": 873,
-    "worst": 376,
-    "color": "#c4a84a"
-  },
-  {
     "id": "connor",
     "name": "Connor",
-    "avg": 663,
-    "count": 40,
+    "avg": 677,
+    "count": 48,
     "best": 922,
     "worst": 455,
     "color": "#7ae84a"
@@ -400,7 +400,8 @@ const dates = [
   "07-20",
   "07-21",
   "07-22",
-  "07-23"
+  "07-23",
+  "07-24"
 ];
 
 const dailyScores = {
@@ -474,13 +475,14 @@ const dailyScores = {
     902,
     686,
     945,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    640
+    848,
+    985,
+    797,
+    862,
+    974,
+    873,
+    640,
+    925
   ],
   "cam": [
     null,
@@ -552,12 +554,13 @@ const dailyScores = {
     560,
     541,
     null,
+    642,
+    853,
+    701,
+    516,
     null,
-    null,
-    null,
-    null,
-    null,
-    null,
+    726,
+    812,
     null
   ],
   "casey": [
@@ -630,13 +633,93 @@ const dailyScores = {
     625,
     560,
     826,
+    726,
+    916,
+    655,
+    558,
+    811,
+    837,
+    789,
+    794
+  ],
+  "vince": [
     null,
     null,
     null,
     null,
     null,
+    634,
     null,
-    789
+    700,
+    754,
+    835,
+    376,
+    691,
+    508,
+    762,
+    770,
+    626,
+    530,
+    614,
+    775,
+    661,
+    801,
+    826,
+    618,
+    590,
+    765,
+    692,
+    746,
+    520,
+    594,
+    757,
+    518,
+    872,
+    408,
+    610,
+    648,
+    682,
+    586,
+    738,
+    596,
+    702,
+    758,
+    724,
+    522,
+    873,
+    551,
+    681,
+    749,
+    843,
+    539,
+    762,
+    791,
+    794,
+    801,
+    780,
+    668,
+    846,
+    753,
+    624,
+    674,
+    864,
+    732,
+    770,
+    741,
+    743,
+    674,
+    838,
+    623,
+    559,
+    839,
+    829,
+    867,
+    743,
+    755,
+    791,
+    890,
+    646,
+    813
   ],
   "mark": [
     702,
@@ -708,12 +791,92 @@ const dailyScores = {
     569,
     554,
     852,
+    638,
+    844,
+    803,
+    548,
+    843,
+    878,
+    631,
+    639
+  ],
+  "matt": [
+    731,
+    493,
     null,
     null,
     null,
+    709,
+    615,
+    675,
+    493,
+    795,
+    357,
+    640,
+    557,
+    764,
+    null,
+    666,
+    null,
+    645,
+    897,
+    667,
+    792,
+    719,
+    610,
+    687,
+    519,
+    548,
+    756,
+    475,
+    658,
+    617,
+    656,
+    775,
+    687,
+    746,
+    744,
+    827,
+    754,
+    805,
+    733,
+    861,
+    543,
+    609,
+    537,
+    658,
+    590,
+    683,
+    899,
+    814,
+    790,
+    890,
+    761,
+    759,
+    720,
+    844,
+    709,
+    596,
+    661,
+    648,
+    779,
+    744,
+    null,
+    900,
+    736,
+    758,
+    780,
+    905,
+    661,
+    521,
+    802,
     null,
     null,
+    782,
+    691,
+    750,
     null,
+    863,
     null
   ],
   "tyler": [
@@ -792,163 +955,8 @@ const dailyScores = {
     null,
     null,
     null,
-    null
-  ],
-  "matt": [
-    731,
-    493,
-    null,
-    null,
-    null,
-    709,
-    615,
-    675,
-    493,
-    795,
-    357,
-    640,
-    557,
-    764,
-    null,
-    666,
-    null,
-    645,
-    897,
-    667,
-    792,
-    719,
-    610,
-    687,
-    519,
-    548,
-    756,
-    475,
-    658,
-    617,
-    656,
-    775,
-    687,
-    746,
-    744,
-    827,
-    754,
-    805,
-    733,
-    861,
-    543,
-    609,
-    537,
-    658,
-    590,
-    683,
-    899,
-    814,
-    790,
-    890,
-    761,
-    759,
-    720,
-    844,
-    709,
-    596,
-    661,
-    648,
-    779,
-    744,
-    null,
-    900,
-    736,
-    758,
-    780,
-    905,
-    661,
-    521,
-    802,
-    null,
-    null,
-    null,
-    null,
-    null,
     null,
     null
-  ],
-  "vince": [
-    null,
-    null,
-    null,
-    null,
-    null,
-    634,
-    null,
-    700,
-    754,
-    835,
-    376,
-    691,
-    508,
-    762,
-    770,
-    626,
-    530,
-    614,
-    775,
-    661,
-    801,
-    826,
-    618,
-    590,
-    765,
-    692,
-    746,
-    520,
-    594,
-    757,
-    518,
-    872,
-    408,
-    610,
-    648,
-    682,
-    586,
-    738,
-    596,
-    702,
-    758,
-    724,
-    522,
-    873,
-    551,
-    681,
-    749,
-    843,
-    539,
-    762,
-    791,
-    794,
-    801,
-    780,
-    668,
-    846,
-    753,
-    624,
-    674,
-    864,
-    732,
-    770,
-    741,
-    743,
-    674,
-    838,
-    623,
-    559,
-    839,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    646
   ],
   "connor": [
     null,
@@ -1020,13 +1028,14 @@ const dailyScores = {
     653,
     561,
     740,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
-    null
+    718,
+    750,
+    773,
+    729,
+    912,
+    796,
+    665,
+    661
   ]
 };
 
@@ -1034,128 +1043,192 @@ const questionStats = {
   "sanup": [
     {
       "question": 1,
-      "green": 46,
-      "attempts": 69,
-      "greenRate": 67
+      "green": 50,
+      "attempts": 76,
+      "greenRate": 66
     },
     {
       "question": 2,
-      "green": 45,
-      "attempts": 69,
-      "greenRate": 65
+      "green": 49,
+      "attempts": 76,
+      "greenRate": 64
     },
     {
       "question": 3,
-      "green": 42,
-      "attempts": 69,
+      "green": 46,
+      "attempts": 76,
       "greenRate": 61
     },
     {
       "question": 4,
-      "green": 35,
-      "attempts": 69,
-      "greenRate": 51
+      "green": 41,
+      "attempts": 76,
+      "greenRate": 54
     },
     {
       "question": 5,
-      "green": 32,
-      "attempts": 69,
-      "greenRate": 46
+      "green": 37,
+      "attempts": 76,
+      "greenRate": 49
     }
   ],
   "cam": [
     {
       "question": 1,
-      "green": 10,
-      "attempts": 20,
-      "greenRate": 50
+      "green": 14,
+      "attempts": 26,
+      "greenRate": 54
     },
     {
       "question": 2,
-      "green": 12,
-      "attempts": 20,
-      "greenRate": 60
+      "green": 13,
+      "attempts": 26,
+      "greenRate": 50
     },
     {
       "question": 3,
-      "green": 9,
-      "attempts": 20,
-      "greenRate": 45
+      "green": 12,
+      "attempts": 26,
+      "greenRate": 46
     },
     {
       "question": 4,
       "green": 5,
-      "attempts": 19,
-      "greenRate": 26
+      "attempts": 25,
+      "greenRate": 20
     },
     {
       "question": 5,
-      "green": 5,
-      "attempts": 19,
-      "greenRate": 26
+      "green": 6,
+      "attempts": 25,
+      "greenRate": 24
     }
   ],
   "casey": [
     {
       "question": 1,
-      "green": 28,
-      "attempts": 66,
-      "greenRate": 42
+      "green": 33,
+      "attempts": 73,
+      "greenRate": 45
     },
     {
       "question": 2,
-      "green": 29,
-      "attempts": 66,
-      "greenRate": 44
-    },
-    {
-      "question": 3,
-      "green": 22,
-      "attempts": 66,
-      "greenRate": 33
-    },
-    {
-      "question": 4,
-      "green": 14,
-      "attempts": 66,
-      "greenRate": 21
-    },
-    {
-      "question": 5,
-      "green": 10,
-      "attempts": 66,
-      "greenRate": 15
-    }
-  ],
-  "mark": [
-    {
-      "question": 1,
-      "green": 31,
-      "attempts": 68,
-      "greenRate": 46
-    },
-    {
-      "question": 2,
-      "green": 30,
-      "attempts": 68,
+      "green": 32,
+      "attempts": 73,
       "greenRate": 44
     },
     {
       "question": 3,
       "green": 23,
-      "attempts": 68,
-      "greenRate": 34
+      "attempts": 73,
+      "greenRate": 32
     },
     {
       "question": 4,
-      "green": 13,
-      "attempts": 68,
-      "greenRate": 19
+      "green": 16,
+      "attempts": 73,
+      "greenRate": 22
+    },
+    {
+      "question": 5,
+      "green": 12,
+      "attempts": 73,
+      "greenRate": 16
+    }
+  ],
+  "vince": [
+    {
+      "question": 1,
+      "green": 27,
+      "attempts": 71,
+      "greenRate": 38
+    },
+    {
+      "question": 2,
+      "green": 28,
+      "attempts": 71,
+      "greenRate": 39
+    },
+    {
+      "question": 3,
+      "green": 19,
+      "attempts": 71,
+      "greenRate": 27
+    },
+    {
+      "question": 4,
+      "green": 14,
+      "attempts": 71,
+      "greenRate": 20
+    },
+    {
+      "question": 5,
+      "green": 10,
+      "attempts": 71,
+      "greenRate": 14
+    }
+  ],
+  "mark": [
+    {
+      "question": 1,
+      "green": 35,
+      "attempts": 76,
+      "greenRate": 46
+    },
+    {
+      "question": 2,
+      "green": 35,
+      "attempts": 76,
+      "greenRate": 46
+    },
+    {
+      "question": 3,
+      "green": 29,
+      "attempts": 76,
+      "greenRate": 38
+    },
+    {
+      "question": 4,
+      "green": 15,
+      "attempts": 76,
+      "greenRate": 20
+    },
+    {
+      "question": 5,
+      "green": 14,
+      "attempts": 76,
+      "greenRate": 18
+    }
+  ],
+  "matt": [
+    {
+      "question": 1,
+      "green": 25,
+      "attempts": 67,
+      "greenRate": 37
+    },
+    {
+      "question": 2,
+      "green": 22,
+      "attempts": 67,
+      "greenRate": 33
+    },
+    {
+      "question": 3,
+      "green": 22,
+      "attempts": 67,
+      "greenRate": 33
+    },
+    {
+      "question": 4,
+      "green": 18,
+      "attempts": 67,
+      "greenRate": 27
     },
     {
       "question": 5,
       "green": 13,
-      "attempts": 68,
+      "attempts": 67,
       "greenRate": 19
     }
   ],
@@ -1191,100 +1264,36 @@ const questionStats = {
       "greenRate": 9
     }
   ],
-  "matt": [
-    {
-      "question": 1,
-      "green": 25,
-      "attempts": 63,
-      "greenRate": 40
-    },
-    {
-      "question": 2,
-      "green": 21,
-      "attempts": 63,
-      "greenRate": 33
-    },
-    {
-      "question": 3,
-      "green": 20,
-      "attempts": 63,
-      "greenRate": 32
-    },
-    {
-      "question": 4,
-      "green": 16,
-      "attempts": 63,
-      "greenRate": 25
-    },
-    {
-      "question": 5,
-      "green": 12,
-      "attempts": 63,
-      "greenRate": 19
-    }
-  ],
-  "vince": [
-    {
-      "question": 1,
-      "green": 25,
-      "attempts": 64,
-      "greenRate": 39
-    },
-    {
-      "question": 2,
-      "green": 24,
-      "attempts": 64,
-      "greenRate": 38
-    },
-    {
-      "question": 3,
-      "green": 16,
-      "attempts": 64,
-      "greenRate": 25
-    },
-    {
-      "question": 4,
-      "green": 12,
-      "attempts": 64,
-      "greenRate": 19
-    },
-    {
-      "question": 5,
-      "green": 8,
-      "attempts": 64,
-      "greenRate": 12
-    }
-  ],
   "connor": [
     {
       "question": 1,
-      "green": 12,
-      "attempts": 40,
-      "greenRate": 30
+      "green": 16,
+      "attempts": 48,
+      "greenRate": 33
     },
     {
       "question": 2,
-      "green": 10,
-      "attempts": 40,
+      "green": 12,
+      "attempts": 48,
       "greenRate": 25
     },
     {
       "question": 3,
-      "green": 8,
-      "attempts": 40,
-      "greenRate": 20
+      "green": 10,
+      "attempts": 48,
+      "greenRate": 21
     },
     {
       "question": 4,
-      "green": 7,
-      "attempts": 40,
-      "greenRate": 18
+      "green": 10,
+      "attempts": 48,
+      "greenRate": 21
     },
     {
       "question": 5,
-      "green": 7,
-      "attempts": 40,
-      "greenRate": 18
+      "green": 9,
+      "attempts": 48,
+      "greenRate": 19
     }
   ]
 };
@@ -1292,32 +1301,32 @@ const questionStats = {
 const groupQuestionStats = [
   {
     "question": 1,
-    "green": 187,
-    "attempts": 413,
-    "greenRate": 45
+    "green": 210,
+    "attempts": 460,
+    "greenRate": 46
   },
   {
     "question": 2,
-    "green": 184,
-    "attempts": 413,
-    "greenRate": 45
+    "green": 204,
+    "attempts": 460,
+    "greenRate": 44
   },
   {
     "question": 3,
-    "green": 147,
-    "attempts": 413,
-    "greenRate": 36
+    "green": 168,
+    "attempts": 460,
+    "greenRate": 37
   },
   {
     "question": 4,
-    "green": 113,
-    "attempts": 412,
-    "greenRate": 27
+    "green": 130,
+    "attempts": 459,
+    "greenRate": 28
   },
   {
     "question": 5,
-    "green": 89,
-    "attempts": 412,
+    "green": 103,
+    "attempts": 459,
     "greenRate": 22
   }
 ];

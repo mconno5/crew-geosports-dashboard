@@ -14,8 +14,9 @@ That command:
 2. Extracts GeoSports-looking iMessage messages.
 3. Parses scores.
 4. Applies the dedupe rule: first score per sender/player per day. Same-score ties from different players are allowed starting June 21, 2026, while older dates keep the original duplicate-score protection.
-5. Writes CSV/JSON data into `data/`.
-6. Writes the final dashboard to `dist/dashboard.html`.
+5. Merges the private reference backfill, keeping Messages as the source of truth if it later supplies the same player/date.
+6. Writes CSV/JSON data into `data/`.
+7. Writes the final dashboard to `dist/dashboard.html`.
 
 ## Files
 
@@ -23,6 +24,7 @@ That command:
 - `config/senders.local.json`: private, gitignored mapping from iMessage sender handles (phone numbers, "Me") to player slugs. Unmapped senders get an anonymous hashed ID so raw handles never reach generated output.
 - `data/geosports_scores.csv`: raw matching messages.
 - `data/geosports_parsed.csv`: deduped score rows.
+- `data/geosports_backfill.local.csv`: private screenshot-verified scores for missing Messages periods. It is gitignored and uses public player slugs rather than phone numbers.
 - `data/dashboard_data.json`: generated dashboard payload.
 - `dist/dashboard.html`: generated shareable report.
 
@@ -65,6 +67,17 @@ python3 -m geosports build --input-csv data/geosports_parsed.csv
 Reading `~/Library/Messages/chat.db` requires Full Disk Access for the terminal app running the command.
 
 Reply and reaction messages are skipped so replies to prior GeoSports posts do not count as new scores.
+
+### Private Backfill Reference
+
+The daily build automatically reads `data/geosports_backfill.local.csv` when it exists. Its required columns are:
+
+```csv
+date,player_id,score,emoji_row
+2026-07-17,sanup,848,🟢🟡🟡🟢🟡
+```
+
+`player_id` must be a configured public slug and each player/date may appear once. The file may include a local-only `source_image` column for auditability. If Messages later syncs a score for the same player/date, that Messages row is retained and the reference row is skipped. A score or emoji mismatch is logged using only the public player slug. To correct a reference entry, edit the local file and run the normal build; do not add it to Git.
 
 ## GitHub Pages
 
