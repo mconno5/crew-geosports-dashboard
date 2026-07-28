@@ -40,6 +40,7 @@ class IMessageTests(unittest.TestCase):
                     (2, 2, "+13125550100 GeoSports 701 / 1,000", 2000, None, None),
                     (3, 3, "+13125550100 GeoSports 702 / 1,000", 0, "reply-guid", None),
                     (4, 4, "+13125550100 GeoSports 703 / 1,000", 0, None, "thread-guid"),
+                    (5, 5, "+13125550100 GeoHistory 704 / 1,000", 0, None, None),
                 ]
                 for rowid, date, text, associated_type, reply_to_guid, thread_originator_guid in rows:
                     conn.execute(

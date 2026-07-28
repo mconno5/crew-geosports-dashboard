@@ -7,14 +7,15 @@ from datetime import date
 from .config import normalize_sender
 from .models import RawMessage, ScoreRow
 
-SEARCH_TERMS = ("Geosports", "geosports", "GeoSports", "/1000", "/ 1000", "/1,000", "/ 1,000")
+# Score-shaped messages from other games must not enter the GeoSports pipeline.
+SEARCH_TERMS = ("geosports",)
 SCORE_RE = re.compile(r"(\d{1,3}(?:,\d{3})?)\s*/\s*1[,.]?000")
 EMOJI_RE = re.compile(r"[🟢🟡🔴⚫⬛🔵]{3,}")
 SAME_SCORE_TIE_START = date(2026, 6, 21)
 
 
 def is_geosports_message(message: str) -> bool:
-    return any(term in message for term in SEARCH_TERMS)
+    return "geosports" in message.casefold()
 
 
 def parse_score(message: str) -> tuple[int | None, str | None]:

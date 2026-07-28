@@ -139,9 +139,9 @@ def clean_streamtyped_string(text: str) -> str | None:
 
 def blob_or_text_matches(text: str | None, attributed_body: bytes | memoryview | None) -> bool:
     if text:
-        return any(term in text for term in SEARCH_TERMS)
+        return any(term in text.casefold() for term in SEARCH_TERMS)
     if attributed_body:
-        blob = bytes(attributed_body)
+        blob = bytes(attributed_body).lower()
         return any(term.encode("utf-8") in blob for term in SEARCH_TERMS)
     return False
 

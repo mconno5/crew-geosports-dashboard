@@ -20,6 +20,15 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(rows[0].sender, "3125550100")
         self.assertEqual(rows[0].score, 725)
 
+    def test_parse_messages_rejects_other_score_shaped_games(self):
+        rows = parse_messages(
+            [
+                RawMessage(datetime(2026, 7, 28, tzinfo=timezone.utc), "+13125550100", "GeoHistory 674 / 1,000 🟢🟢🟡🟡🔴"),
+                RawMessage(datetime(2026, 7, 28, tzinfo=timezone.utc), "+13125550101", "GEOSPORTS 725 / 1,000 🟢🟡🟡🟢🟡"),
+            ]
+        )
+        self.assertEqual([(row.sender, row.score) for row in rows], [("3125550101", 725)])
+
     def test_parse_messages_filters_replies(self):
         rows = parse_messages(
             [
