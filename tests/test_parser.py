@@ -9,6 +9,12 @@ class ParserTests(unittest.TestCase):
     def test_parse_score_accepts_commas_and_spacing(self):
         self.assertEqual(parse_score("GeoSports 702 / 1,000 🟢🟡🔴"), (702, "🟢🟡🔴"))
 
+    def test_parse_score_preserves_trophy_answer_position(self):
+        self.assertEqual(
+            parse_score("GeoSports · August 5th 🟢🏆🟡🟢🔴 771 / 1,000"),
+            (771, "🟢🏆🟡🟢🔴"),
+        )
+
     def test_parse_messages_filters_non_scores(self):
         rows = parse_messages(
             [

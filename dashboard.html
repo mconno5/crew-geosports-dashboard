@@ -78,6 +78,8 @@
   .question-rate { color: var(--green); font: 28px var(--font-display); line-height: 1; margin: 7px 0 5px; }
   .question-count { color: var(--muted); font: 10px var(--font-mono); white-space: nowrap; }
   .question-benchmark { margin-top: 5px; color: var(--muted); font: 9px var(--font-mono); white-space: nowrap; }
+  .question-perfect { margin-top: 10px; color: #f5c451; font: 10px var(--font-mono); white-space: nowrap; }
+  .question-perfect-benchmark { margin-top: 4px; color: var(--muted); font: 9px var(--font-mono); white-space: nowrap; }
   .question-delta { font-weight: 500; }
   .question-bar { height: 4px; margin-top: 10px; border-radius: 3px; overflow: hidden; background: rgba(255,255,255,0.09); }
   .question-bar > span { display: block; height: 100%; background: var(--green); border-radius: inherit; }
@@ -189,7 +191,7 @@
     <section class="player-detail" id="playerDetail" hidden aria-live="polite" aria-label="Selected player question performance">
       <div class="detail-head">
         <div>
-          <div class="detail-kicker">All-time green rate</div>
+          <div class="detail-kicker" id="detailKicker">All-time accuracy</div>
           <div class="detail-title" id="detailTitle"></div>
         </div>
         <button class="detail-close" id="detailClose" type="button" aria-label="Close player breakdown">close</button>
@@ -413,6 +415,7 @@ function leaderboardOrder() {
 const lb = document.getElementById('leaderboard');
 const playerDetail = document.getElementById('playerDetail');
 const detailTitle = document.getElementById('detailTitle');
+const detailKicker = document.getElementById('detailKicker');
 const questionGrid = document.getElementById('questionGrid');
 
 function comparisonColor(delta) {
@@ -431,15 +434,25 @@ function renderPlayerDetail() {
   if (!player) return;
   playerDetail.hidden = false;
   detailTitle.innerHTML = `<span class="detail-dot" style="background:${player.color}"></span>${player.name} · question breakdown`;
-  questionGrid.innerHTML = (questionStats[player.id] || []).map((stat, index) => {
+  const stats = questionStats[player.id] || [];
+  const totalAttempts = stats.reduce((sum, stat) => sum + (stat.attempts || 0), 0);
+  const totalTrophies = stats.reduce((sum, stat) => sum + (stat.trophy || 0), 0);
+  const totalTrophyRate = totalAttempts ? Math.round(totalTrophies / totalAttempts * 100) : 0;
+  detailKicker.textContent = `all-time accuracy · 🏆 ${totalTrophies} perfect ${totalTrophies === 1 ? 'answer' : 'answers'} · ${totalTrophyRate}% perfect rate`;
+  questionGrid.innerHTML = stats.map((stat, index) => {
     const groupStat = groupQuestionStats[index] || {};
     const rate = stat.greenRate == null ? '—' : `${stat.greenRate}%`;
-    const count = stat.attempts ? `${stat.green} / ${stat.attempts} green` : 'no results';
+    const count = stat.attempts ? `${stat.green} / ${stat.attempts} correct` : 'no results';
     const width = stat.greenRate == null ? 0 : stat.greenRate;
     const delta = stat.greenRate == null || groupStat.greenRate == null ? null : stat.greenRate - groupStat.greenRate;
     const deltaLabel = delta == null ? 'group avg —' : `group ${groupStat.greenRate}% · <span class="question-delta">${delta >= 0 ? '+' : ''}${delta} pts</span>`;
     const color = comparisonColor(delta);
-    return `<div class="question-stat" style="border-color:${color}66"><div class="question-label">Q${stat.question}</div><div class="question-rate" style="color:${color}">${rate}</div><div class="question-count">${count}</div><div class="question-benchmark">${deltaLabel}</div><div class="question-bar"><span style="width:${width}%;background:${color}"></span></div></div>`;
+    const trophyRate = stat.trophyRate == null ? '—' : `${stat.trophyRate}%`;
+    const trophyDelta = stat.trophyRate == null || groupStat.trophyRate == null ? null : stat.trophyRate - groupStat.trophyRate;
+    const trophyColor = comparisonColor(trophyDelta);
+    const trophyLabel = stat.attempts ? `🏆 ${stat.trophy} perfect · ${trophyRate}` : '🏆 no results';
+    const trophyBenchmark = trophyDelta == null ? 'group perfect —' : `group perfect ${groupStat.trophyRate}% · <span class="question-delta">${trophyDelta >= 0 ? '+' : ''}${trophyDelta} pts</span>`;
+    return `<div class="question-stat" style="border-color:${color}66"><div class="question-label">Q${stat.question}</div><div class="question-rate" style="color:${color}">${rate}</div><div class="question-count">${count}</div><div class="question-benchmark">${deltaLabel}</div><div class="question-perfect" style="color:${trophyColor}">${trophyLabel}</div><div class="question-perfect-benchmark">${trophyBenchmark}</div><div class="question-bar"><span style="width:${width}%;background:${color}"></span></div></div>`;
   }).join('');
 }
 

@@ -9,7 +9,8 @@ from .models import ScoreRow
 
 RECENT_FORM_DAYS = 7
 QUESTION_COUNT = 5
-QUESTION_MARKERS = {"🟢", "🟡", "🔴", "⚫", "⬛", "🔵"}
+QUESTION_MARKERS = {"🟢", "🟡", "🔴", "⚫", "⬛", "🔵", "🏆"}
+CORRECT_MARKERS = {"🟢", "🏆"}
 
 
 def ordinal_day(dt) -> str:
@@ -28,23 +29,29 @@ def display_range(start, end) -> str:
 def build_question_stats(
     by_player: dict[str, list[ScoreRow]], player_rows: list[dict]
 ) -> dict[str, list[dict]]:
-    """Summarize green results by emoji position without exposing raw messages."""
+    """Summarize correct and 100-point results without exposing raw messages."""
     stats: dict[str, list[dict]] = {}
     for player in player_rows:
-        totals = [{"green": 0, "attempts": 0} for _ in range(QUESTION_COUNT)]
+        totals = [{"green": 0, "trophy": 0, "attempts": 0} for _ in range(QUESTION_COUNT)]
         for row in by_player[player["id"]]:
             for index, marker in enumerate(row.emoji_row[:QUESTION_COUNT]):
                 if marker not in QUESTION_MARKERS:
                     continue
                 totals[index]["attempts"] += 1
-                if marker == "🟢":
+                if marker in CORRECT_MARKERS:
                     totals[index]["green"] += 1
+                if marker == "🏆":
+                    totals[index]["trophy"] += 1
         stats[player["id"]] = [
             {
                 "question": index + 1,
                 "green": total["green"],
+                "trophy": total["trophy"],
                 "attempts": total["attempts"],
                 "greenRate": round(total["green"] / total["attempts"] * 100)
+                if total["attempts"]
+                else None,
+                "trophyRate": round(total["trophy"] / total["attempts"] * 100)
                 if total["attempts"]
                 else None,
             }
@@ -58,13 +65,16 @@ def build_group_question_stats(question_stats: dict[str, list[dict]]) -> list[di
     group_stats = []
     for index in range(QUESTION_COUNT):
         green = sum(stats[index]["green"] for stats in question_stats.values())
+        trophy = sum(stats[index]["trophy"] for stats in question_stats.values())
         attempts = sum(stats[index]["attempts"] for stats in question_stats.values())
         group_stats.append(
             {
                 "question": index + 1,
                 "green": green,
+                "trophy": trophy,
                 "attempts": attempts,
                 "greenRate": round(green / attempts * 100) if attempts else None,
+                "trophyRate": round(trophy / attempts * 100) if attempts else None,
             }
         )
     return group_stats

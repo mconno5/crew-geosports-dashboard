@@ -82,14 +82,22 @@ class AggregateTests(unittest.TestCase):
             ScoreRow(datetime(2026, 6, 22, 10, tzinfo=timezone.utc), "Me", 710, "🟡🟢🟢"),
         ]
         stats = build_dashboard_data(rows, CONFIG)["questionStats"]["mark"]
-        self.assertEqual(stats[0], {"question": 1, "green": 1, "attempts": 2, "greenRate": 50})
-        self.assertEqual(stats[1], {"question": 2, "green": 1, "attempts": 2, "greenRate": 50})
-        self.assertEqual(stats[2], {"question": 3, "green": 1, "attempts": 2, "greenRate": 50})
-        self.assertEqual(stats[3], {"question": 4, "green": 1, "attempts": 1, "greenRate": 100})
-        self.assertEqual(stats[4], {"question": 5, "green": 0, "attempts": 1, "greenRate": 0})
+        self.assertEqual(stats[0], {"question": 1, "green": 1, "trophy": 0, "attempts": 2, "greenRate": 50, "trophyRate": 0})
+        self.assertEqual(stats[1], {"question": 2, "green": 1, "trophy": 0, "attempts": 2, "greenRate": 50, "trophyRate": 0})
+        self.assertEqual(stats[2], {"question": 3, "green": 1, "trophy": 0, "attempts": 2, "greenRate": 50, "trophyRate": 0})
+        self.assertEqual(stats[3], {"question": 4, "green": 1, "trophy": 0, "attempts": 1, "greenRate": 100, "trophyRate": 0})
+        self.assertEqual(stats[4], {"question": 5, "green": 0, "trophy": 0, "attempts": 1, "greenRate": 0, "trophyRate": 0})
         group = build_dashboard_data(rows, CONFIG)["groupQuestionStats"]
-        self.assertEqual(group[0], {"question": 1, "green": 1, "attempts": 2, "greenRate": 50})
-        self.assertEqual(group[3], {"question": 4, "green": 1, "attempts": 1, "greenRate": 100})
+        self.assertEqual(group[0], {"question": 1, "green": 1, "trophy": 0, "attempts": 2, "greenRate": 50, "trophyRate": 0})
+        self.assertEqual(group[3], {"question": 4, "green": 1, "trophy": 0, "attempts": 1, "greenRate": 100, "trophyRate": 0})
+
+    def test_trophy_is_correct_and_tracked_at_its_question_position(self):
+        rows = [ScoreRow(datetime(2026, 8, 5, 10, tzinfo=timezone.utc), "Me", 771, "🟢🏆🟡🟢🔴")]
+        stats = build_dashboard_data(rows, CONFIG)["questionStats"]["mark"]
+
+        self.assertEqual(stats[0], {"question": 1, "green": 1, "trophy": 0, "attempts": 1, "greenRate": 100, "trophyRate": 0})
+        self.assertEqual(stats[1], {"question": 2, "green": 1, "trophy": 1, "attempts": 1, "greenRate": 100, "trophyRate": 100})
+        self.assertEqual(stats[4], {"question": 5, "green": 0, "trophy": 0, "attempts": 1, "greenRate": 0, "trophyRate": 0})
 
 
 if __name__ == "__main__":

@@ -9,7 +9,7 @@ from .config import player_id
 from .models import ScoreRow
 
 BACKFILL_HEADERS = {"date", "player_id", "score", "emoji_row"}
-QUESTION_MARKERS = {"🟢", "🟡", "🔴", "⚫", "⬛", "🔵"}
+QUESTION_MARKERS = {"🟢", "🟡", "🔴", "⚫", "⬛", "🔵", "🏆"}
 
 
 class BackfillValidationError(ValueError):

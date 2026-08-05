@@ -79,6 +79,8 @@ date,player_id,score,emoji_row
 
 `player_id` must be a configured public slug and each player/date may appear once. The file may include a local-only `source_image` column for auditability. If Messages later syncs a score for the same player/date, that Messages row is retained and the reference row is skipped. A score or emoji mismatch is logged using only the public player slug. To correct a reference entry, edit the local file and run the normal build; do not add it to Git.
 
+GeoSports uses `🏆` for a 100-point answer. The dashboard keeps that marker at its original question position, counts it as correct for accuracy, and reports it separately as a perfect answer in the player drilldown.
+
 ## GitHub Pages
 
 Recommended Pages settings:

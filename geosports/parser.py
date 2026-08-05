@@ -10,7 +10,8 @@ from .models import RawMessage, ScoreRow
 # Score-shaped messages from other games must not enter the GeoSports pipeline.
 SEARCH_TERMS = ("geosports",)
 SCORE_RE = re.compile(r"(\d{1,3}(?:,\d{3})?)\s*/\s*1[,.]?000")
-EMOJI_RE = re.compile(r"[🟢🟡🔴⚫⬛🔵]{3,}")
+# GeoSports uses a trophy for a 100-point answer; it occupies one question slot.
+EMOJI_RE = re.compile(r"[🟢🟡🔴⚫⬛🔵🏆]{3,}")
 SAME_SCORE_TIE_START = date(2026, 6, 21)
 
 

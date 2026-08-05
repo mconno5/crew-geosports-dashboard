@@ -62,6 +62,15 @@ class BackfillTests(unittest.TestCase):
 
         self.assertEqual(len(result.rows), 2)
 
+    def test_reference_accepts_trophy_answer_marker(self):
+        path = self.write_backfill(
+            "date,player_id,score,emoji_row\n"
+            "2026-08-05,mark,771,🟢🏆🟡🟢🔴\n"
+        )
+
+        rows = read_backfill_scores(path, CONFIG)
+        self.assertEqual(rows[0].emoji_row, "🟢🏆🟡🟢🔴")
+
     def test_duplicate_reference_player_day_is_rejected(self):
         path = self.write_backfill(
             "date,player_id,score,emoji_row\n"

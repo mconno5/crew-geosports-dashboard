@@ -78,6 +78,8 @@
   .question-rate { color: var(--green); font: 28px var(--font-display); line-height: 1; margin: 7px 0 5px; }
   .question-count { color: var(--muted); font: 10px var(--font-mono); white-space: nowrap; }
   .question-benchmark { margin-top: 5px; color: var(--muted); font: 9px var(--font-mono); white-space: nowrap; }
+  .question-perfect { margin-top: 10px; color: #f5c451; font: 10px var(--font-mono); white-space: nowrap; }
+  .question-perfect-benchmark { margin-top: 4px; color: var(--muted); font: 9px var(--font-mono); white-space: nowrap; }
   .question-delta { font-weight: 500; }
   .question-bar { height: 4px; margin-top: 10px; border-radius: 3px; overflow: hidden; background: rgba(255,255,255,0.09); }
   .question-bar > span { display: block; height: 100%; background: var(--green); border-radius: inherit; }
@@ -120,7 +122,7 @@
   <div class="container" style="padding-top:0; padding-bottom:0;">
     <div class="header-eyebrow">The Crew · Weekly Wrap</div>
     <div class="header-title">GeoSports<br>Report</div>
-    <div class="header-sub">May 9 - August 4, 2026 &nbsp;·&nbsp; 8 players &nbsp;·&nbsp; 534 scores logged</div>
+    <div class="header-sub">May 9 - August 5, 2026 &nbsp;·&nbsp; 8 players &nbsp;·&nbsp; 541 scores logged</div>
   </div>
 </div>
 
@@ -131,12 +133,12 @@
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-label">Group avg</div>
-        <div class="stat-val">738</div>
+        <div class="stat-val">739</div>
         <div class="stat-sub">out of 1,000</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Games played</div>
-        <div class="stat-val">534</div>
+        <div class="stat-val">541</div>
         <div class="stat-sub">across 8 players</div>
       </div>
       <div class="stat-card">
@@ -189,7 +191,7 @@
     <section class="player-detail" id="playerDetail" hidden aria-live="polite" aria-label="Selected player question performance">
       <div class="detail-head">
         <div>
-          <div class="detail-kicker">All-time green rate</div>
+          <div class="detail-kicker" id="detailKicker">All-time accuracy</div>
           <div class="detail-title" id="detailTitle"></div>
         </div>
         <button class="detail-close" id="detailClose" type="button" aria-label="Close player breakdown">close</button>
@@ -221,16 +223,16 @@
 
 <div class="footer">
   <span>geosports.app · The Crew group chat</span>
-  <span>Generated August 4, 2026</span>
+  <span>Generated August 5, 2026</span>
 </div>
 
 <script>
 const reportMeta = {
-  "dateRange": "May 9 - August 4, 2026",
-  "generatedLabel": "August 4, 2026",
+  "dateRange": "May 9 - August 5, 2026",
+  "generatedLabel": "August 5, 2026",
   "playerCount": 8,
-  "scoreCount": 534,
-  "groupAverage": 738,
+  "scoreCount": 541,
+  "groupAverage": 739,
   "highScore": {
     "score": 988,
     "player": "Sanup",
@@ -243,9 +245,9 @@ const reportMeta = {
   },
   "recentFormWindow": {
     "days": 7,
-    "startDate": "2026-07-29",
-    "endDate": "2026-08-04",
-    "label": "July 29 - August 4, 2026"
+    "startDate": "2026-07-30",
+    "endDate": "2026-08-05",
+    "label": "July 30 - August 5, 2026"
   }
 };
 
@@ -254,7 +256,7 @@ const players = [
     "id": "sanup",
     "name": "Sanup",
     "avg": 852,
-    "count": 87,
+    "count": 88,
     "best": 988,
     "worst": 541,
     "color": "#4ae8a0"
@@ -262,8 +264,8 @@ const players = [
   {
     "id": "cam",
     "name": "Cam",
-    "avg": 751,
-    "count": 38,
+    "avg": 754,
+    "count": 39,
     "best": 987,
     "worst": 0,
     "color": "#4ae8e8"
@@ -271,8 +273,8 @@ const players = [
   {
     "id": "casey",
     "name": "Casey",
-    "avg": 733,
-    "count": 84,
+    "avg": 734,
+    "count": 85,
     "best": 978,
     "worst": 416,
     "color": "#e8734a"
@@ -280,8 +282,8 @@ const players = [
   {
     "id": "vince",
     "name": "Vince",
-    "avg": 717,
-    "count": 82,
+    "avg": 719,
+    "count": 83,
     "best": 909,
     "worst": 376,
     "color": "#c4a84a"
@@ -289,8 +291,8 @@ const players = [
   {
     "id": "mark",
     "name": "Mark",
-    "avg": 716,
-    "count": 87,
+    "avg": 718,
+    "count": 88,
     "best": 963,
     "worst": 426,
     "color": "#4a9ee8"
@@ -299,7 +301,7 @@ const players = [
     "id": "matt",
     "name": "Matt",
     "avg": 709,
-    "count": 74,
+    "count": 75,
     "best": 905,
     "worst": 357,
     "color": "#a04ae8"
@@ -316,8 +318,8 @@ const players = [
   {
     "id": "connor",
     "name": "Connor",
-    "avg": 683,
-    "count": 59,
+    "avg": 682,
+    "count": 60,
     "best": 922,
     "worst": 455,
     "color": "#7ae84a"
@@ -412,7 +414,8 @@ const dates = [
   "08-01",
   "08-02",
   "08-03",
-  "08-04"
+  "08-04",
+  "08-05"
 ];
 
 const dailyScores = {
@@ -504,7 +507,8 @@ const dailyScores = {
     775,
     970,
     822,
-    884
+    884,
+    927
   ],
   "cam": [
     null,
@@ -594,7 +598,8 @@ const dailyScores = {
     755,
     792,
     776,
-    897
+    897,
+    850
   ],
   "casey": [
     null,
@@ -684,7 +689,8 @@ const dailyScores = {
     835,
     846,
     830,
-    907
+    907,
+    816
   ],
   "vince": [
     null,
@@ -774,7 +780,8 @@ const dailyScores = {
     834,
     757,
     857,
-    853
+    853,
+    898
   ],
   "mark": [
     702,
@@ -864,7 +871,8 @@ const dailyScores = {
     703,
     837,
     915,
-    938
+    938,
+    905
   ],
   "matt": [
     731,
@@ -954,7 +962,8 @@ const dailyScores = {
     760,
     880,
     766,
-    null
+    null,
+    771
   ],
   "tyler": [
     null,
@@ -1025,6 +1034,7 @@ const dailyScores = {
     null,
     null,
     780,
+    null,
     null,
     null,
     null,
@@ -1134,7 +1144,8 @@ const dailyScores = {
     666,
     802,
     716,
-    849
+    849,
+    637
   ]
 };
 
@@ -1142,257 +1153,337 @@ const questionStats = {
   "sanup": [
     {
       "question": 1,
-      "green": 61,
-      "attempts": 87,
-      "greenRate": 70
+      "green": 62,
+      "trophy": 0,
+      "attempts": 88,
+      "greenRate": 70,
+      "trophyRate": 0
     },
     {
       "question": 2,
-      "green": 56,
-      "attempts": 87,
-      "greenRate": 64
+      "green": 57,
+      "trophy": 0,
+      "attempts": 88,
+      "greenRate": 65,
+      "trophyRate": 0
     },
     {
       "question": 3,
       "green": 54,
-      "attempts": 87,
-      "greenRate": 62
+      "trophy": 0,
+      "attempts": 88,
+      "greenRate": 61,
+      "trophyRate": 0
     },
     {
       "question": 4,
-      "green": 48,
-      "attempts": 87,
-      "greenRate": 55
+      "green": 49,
+      "trophy": 0,
+      "attempts": 88,
+      "greenRate": 56,
+      "trophyRate": 0
     },
     {
       "question": 5,
-      "green": 43,
-      "attempts": 87,
-      "greenRate": 49
+      "green": 44,
+      "trophy": 0,
+      "attempts": 88,
+      "greenRate": 50,
+      "trophyRate": 0
     }
   ],
   "cam": [
     {
       "question": 1,
-      "green": 18,
-      "attempts": 38,
-      "greenRate": 47
+      "green": 19,
+      "trophy": 0,
+      "attempts": 39,
+      "greenRate": 49,
+      "trophyRate": 0
     },
     {
       "question": 2,
-      "green": 21,
-      "attempts": 38,
-      "greenRate": 55
+      "green": 22,
+      "trophy": 0,
+      "attempts": 39,
+      "greenRate": 56,
+      "trophyRate": 0
     },
     {
       "question": 3,
       "green": 19,
-      "attempts": 38,
-      "greenRate": 50
+      "trophy": 0,
+      "attempts": 39,
+      "greenRate": 49,
+      "trophyRate": 0
     },
     {
       "question": 4,
       "green": 9,
-      "attempts": 37,
-      "greenRate": 24
+      "trophy": 0,
+      "attempts": 38,
+      "greenRate": 24,
+      "trophyRate": 0
     },
     {
       "question": 5,
       "green": 10,
-      "attempts": 37,
-      "greenRate": 27
+      "trophy": 0,
+      "attempts": 38,
+      "greenRate": 26,
+      "trophyRate": 0
     }
   ],
   "casey": [
     {
       "question": 1,
-      "green": 38,
-      "attempts": 84,
-      "greenRate": 45
+      "green": 39,
+      "trophy": 0,
+      "attempts": 85,
+      "greenRate": 46,
+      "trophyRate": 0
     },
     {
       "question": 2,
-      "green": 34,
-      "attempts": 84,
-      "greenRate": 40
+      "green": 35,
+      "trophy": 0,
+      "attempts": 85,
+      "greenRate": 41,
+      "trophyRate": 0
     },
     {
       "question": 3,
       "green": 30,
-      "attempts": 84,
-      "greenRate": 36
+      "trophy": 0,
+      "attempts": 85,
+      "greenRate": 35,
+      "trophyRate": 0
     },
     {
       "question": 4,
       "green": 24,
-      "attempts": 84,
-      "greenRate": 29
+      "trophy": 0,
+      "attempts": 85,
+      "greenRate": 28,
+      "trophyRate": 0
     },
     {
       "question": 5,
       "green": 16,
-      "attempts": 84,
-      "greenRate": 19
+      "trophy": 0,
+      "attempts": 85,
+      "greenRate": 19,
+      "trophyRate": 0
     }
   ],
   "vince": [
     {
       "question": 1,
-      "green": 34,
-      "attempts": 82,
-      "greenRate": 41
+      "green": 35,
+      "trophy": 0,
+      "attempts": 83,
+      "greenRate": 42,
+      "trophyRate": 0
     },
     {
       "question": 2,
-      "green": 34,
-      "attempts": 82,
-      "greenRate": 41
+      "green": 35,
+      "trophy": 0,
+      "attempts": 83,
+      "greenRate": 42,
+      "trophyRate": 0
     },
     {
       "question": 3,
       "green": 23,
-      "attempts": 82,
-      "greenRate": 28
+      "trophy": 0,
+      "attempts": 83,
+      "greenRate": 28,
+      "trophyRate": 0
     },
     {
       "question": 4,
-      "green": 18,
-      "attempts": 82,
-      "greenRate": 22
+      "green": 19,
+      "trophy": 0,
+      "attempts": 83,
+      "greenRate": 23,
+      "trophyRate": 0
     },
     {
       "question": 5,
       "green": 12,
-      "attempts": 82,
-      "greenRate": 15
+      "trophy": 0,
+      "attempts": 83,
+      "greenRate": 14,
+      "trophyRate": 0
     }
   ],
   "mark": [
     {
       "question": 1,
-      "green": 42,
-      "attempts": 87,
-      "greenRate": 48
+      "green": 43,
+      "trophy": 0,
+      "attempts": 88,
+      "greenRate": 49,
+      "trophyRate": 0
     },
     {
       "question": 2,
-      "green": 40,
-      "attempts": 87,
-      "greenRate": 46
+      "green": 41,
+      "trophy": 0,
+      "attempts": 88,
+      "greenRate": 47,
+      "trophyRate": 0
     },
     {
       "question": 3,
-      "green": 34,
-      "attempts": 87,
-      "greenRate": 39
+      "green": 35,
+      "trophy": 0,
+      "attempts": 88,
+      "greenRate": 40,
+      "trophyRate": 0
     },
     {
       "question": 4,
       "green": 21,
-      "attempts": 87,
-      "greenRate": 24
+      "trophy": 0,
+      "attempts": 88,
+      "greenRate": 24,
+      "trophyRate": 0
     },
     {
       "question": 5,
-      "green": 19,
-      "attempts": 87,
-      "greenRate": 22
+      "green": 20,
+      "trophy": 0,
+      "attempts": 88,
+      "greenRate": 23,
+      "trophyRate": 0
     }
   ],
   "matt": [
     {
       "question": 1,
-      "green": 27,
-      "attempts": 74,
-      "greenRate": 36
+      "green": 28,
+      "trophy": 0,
+      "attempts": 75,
+      "greenRate": 37,
+      "trophyRate": 0
     },
     {
       "question": 2,
-      "green": 25,
-      "attempts": 74,
-      "greenRate": 34
+      "green": 26,
+      "trophy": 1,
+      "attempts": 75,
+      "greenRate": 35,
+      "trophyRate": 1
     },
     {
       "question": 3,
       "green": 24,
-      "attempts": 74,
-      "greenRate": 32
+      "trophy": 0,
+      "attempts": 75,
+      "greenRate": 32,
+      "trophyRate": 0
     },
     {
       "question": 4,
-      "green": 20,
-      "attempts": 74,
-      "greenRate": 27
+      "green": 21,
+      "trophy": 0,
+      "attempts": 75,
+      "greenRate": 28,
+      "trophyRate": 0
     },
     {
       "question": 5,
       "green": 15,
-      "attempts": 74,
-      "greenRate": 20
+      "trophy": 0,
+      "attempts": 75,
+      "greenRate": 20,
+      "trophyRate": 0
     }
   ],
   "tyler": [
     {
       "question": 1,
       "green": 10,
+      "trophy": 0,
       "attempts": 23,
-      "greenRate": 43
+      "greenRate": 43,
+      "trophyRate": 0
     },
     {
       "question": 2,
       "green": 13,
+      "trophy": 0,
       "attempts": 23,
-      "greenRate": 57
+      "greenRate": 57,
+      "trophyRate": 0
     },
     {
       "question": 3,
       "green": 7,
+      "trophy": 0,
       "attempts": 23,
-      "greenRate": 30
+      "greenRate": 30,
+      "trophyRate": 0
     },
     {
       "question": 4,
       "green": 11,
+      "trophy": 0,
       "attempts": 23,
-      "greenRate": 48
+      "greenRate": 48,
+      "trophyRate": 0
     },
     {
       "question": 5,
       "green": 2,
+      "trophy": 0,
       "attempts": 23,
-      "greenRate": 9
+      "greenRate": 9,
+      "trophyRate": 0
     }
   ],
   "connor": [
     {
       "question": 1,
       "green": 20,
-      "attempts": 59,
-      "greenRate": 34
+      "trophy": 0,
+      "attempts": 60,
+      "greenRate": 33,
+      "trophyRate": 0
     },
     {
       "question": 2,
       "green": 16,
-      "attempts": 59,
-      "greenRate": 27
+      "trophy": 0,
+      "attempts": 60,
+      "greenRate": 27,
+      "trophyRate": 0
     },
     {
       "question": 3,
       "green": 12,
-      "attempts": 59,
-      "greenRate": 20
+      "trophy": 0,
+      "attempts": 60,
+      "greenRate": 20,
+      "trophyRate": 0
     },
     {
       "question": 4,
       "green": 12,
-      "attempts": 59,
-      "greenRate": 20
+      "trophy": 0,
+      "attempts": 60,
+      "greenRate": 20,
+      "trophyRate": 0
     },
     {
       "question": 5,
       "green": 10,
-      "attempts": 59,
-      "greenRate": 17
+      "trophy": 0,
+      "attempts": 60,
+      "greenRate": 17,
+      "trophyRate": 0
     }
   ]
 };
@@ -1400,33 +1491,43 @@ const questionStats = {
 const groupQuestionStats = [
   {
     "question": 1,
-    "green": 250,
-    "attempts": 534,
-    "greenRate": 47
+    "green": 256,
+    "trophy": 0,
+    "attempts": 541,
+    "greenRate": 47,
+    "trophyRate": 0
   },
   {
     "question": 2,
-    "green": 239,
-    "attempts": 534,
-    "greenRate": 45
+    "green": 245,
+    "trophy": 1,
+    "attempts": 541,
+    "greenRate": 45,
+    "trophyRate": 0
   },
   {
     "question": 3,
-    "green": 203,
-    "attempts": 534,
-    "greenRate": 38
+    "green": 204,
+    "trophy": 0,
+    "attempts": 541,
+    "greenRate": 38,
+    "trophyRate": 0
   },
   {
     "question": 4,
-    "green": 163,
-    "attempts": 533,
-    "greenRate": 31
+    "green": 166,
+    "trophy": 0,
+    "attempts": 540,
+    "greenRate": 31,
+    "trophyRate": 0
   },
   {
     "question": 5,
-    "green": 127,
-    "attempts": 533,
-    "greenRate": 24
+    "green": 129,
+    "trophy": 0,
+    "attempts": 540,
+    "greenRate": 24,
+    "trophyRate": 0
   }
 ];
 
@@ -1588,6 +1689,7 @@ function leaderboardOrder() {
 const lb = document.getElementById('leaderboard');
 const playerDetail = document.getElementById('playerDetail');
 const detailTitle = document.getElementById('detailTitle');
+const detailKicker = document.getElementById('detailKicker');
 const questionGrid = document.getElementById('questionGrid');
 
 function comparisonColor(delta) {
@@ -1606,15 +1708,25 @@ function renderPlayerDetail() {
   if (!player) return;
   playerDetail.hidden = false;
   detailTitle.innerHTML = `<span class="detail-dot" style="background:${player.color}"></span>${player.name} · question breakdown`;
-  questionGrid.innerHTML = (questionStats[player.id] || []).map((stat, index) => {
+  const stats = questionStats[player.id] || [];
+  const totalAttempts = stats.reduce((sum, stat) => sum + (stat.attempts || 0), 0);
+  const totalTrophies = stats.reduce((sum, stat) => sum + (stat.trophy || 0), 0);
+  const totalTrophyRate = totalAttempts ? Math.round(totalTrophies / totalAttempts * 100) : 0;
+  detailKicker.textContent = `all-time accuracy · 🏆 ${totalTrophies} perfect ${totalTrophies === 1 ? 'answer' : 'answers'} · ${totalTrophyRate}% perfect rate`;
+  questionGrid.innerHTML = stats.map((stat, index) => {
     const groupStat = groupQuestionStats[index] || {};
     const rate = stat.greenRate == null ? '—' : `${stat.greenRate}%`;
-    const count = stat.attempts ? `${stat.green} / ${stat.attempts} green` : 'no results';
+    const count = stat.attempts ? `${stat.green} / ${stat.attempts} correct` : 'no results';
     const width = stat.greenRate == null ? 0 : stat.greenRate;
     const delta = stat.greenRate == null || groupStat.greenRate == null ? null : stat.greenRate - groupStat.greenRate;
     const deltaLabel = delta == null ? 'group avg —' : `group ${groupStat.greenRate}% · <span class="question-delta">${delta >= 0 ? '+' : ''}${delta} pts</span>`;
     const color = comparisonColor(delta);
-    return `<div class="question-stat" style="border-color:${color}66"><div class="question-label">Q${stat.question}</div><div class="question-rate" style="color:${color}">${rate}</div><div class="question-count">${count}</div><div class="question-benchmark">${deltaLabel}</div><div class="question-bar"><span style="width:${width}%;background:${color}"></span></div></div>`;
+    const trophyRate = stat.trophyRate == null ? '—' : `${stat.trophyRate}%`;
+    const trophyDelta = stat.trophyRate == null || groupStat.trophyRate == null ? null : stat.trophyRate - groupStat.trophyRate;
+    const trophyColor = comparisonColor(trophyDelta);
+    const trophyLabel = stat.attempts ? `🏆 ${stat.trophy} perfect · ${trophyRate}` : '🏆 no results';
+    const trophyBenchmark = trophyDelta == null ? 'group perfect —' : `group perfect ${groupStat.trophyRate}% · <span class="question-delta">${trophyDelta >= 0 ? '+' : ''}${trophyDelta} pts</span>`;
+    return `<div class="question-stat" style="border-color:${color}66"><div class="question-label">Q${stat.question}</div><div class="question-rate" style="color:${color}">${rate}</div><div class="question-count">${count}</div><div class="question-benchmark">${deltaLabel}</div><div class="question-perfect" style="color:${trophyColor}">${trophyLabel}</div><div class="question-perfect-benchmark">${trophyBenchmark}</div><div class="question-bar"><span style="width:${width}%;background:${color}"></span></div></div>`;
   }).join('');
 }
 
