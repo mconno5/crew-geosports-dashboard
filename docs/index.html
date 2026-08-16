@@ -1246,6 +1246,109 @@ const dailyScores = {
   ]
 };
 
+const dailyGroupAverage = [
+  716,
+  531,
+  737,
+  801,
+  754,
+  727,
+  758,
+  616,
+  670,
+  838,
+  632,
+  720,
+  661,
+  746,
+  812,
+  725,
+  666,
+  740,
+  819,
+  655,
+  739,
+  812,
+  637,
+  699,
+  672,
+  713,
+  754,
+  564,
+  594,
+  690,
+  702,
+  823,
+  556,
+  680,
+  701,
+  674,
+  707,
+  759,
+  668,
+  808,
+  698,
+  724,
+  509,
+  807,
+  618,
+  654,
+  817,
+  751,
+  752,
+  842,
+  781,
+  815,
+  824,
+  827,
+  702,
+  680,
+  686,
+  724,
+  734,
+  846,
+  744,
+  847,
+  734,
+  751,
+  790,
+  812,
+  656,
+  595,
+  834,
+  734,
+  869,
+  751,
+  666,
+  847,
+  833,
+  721,
+  774,
+  736,
+  898,
+  792,
+  763,
+  771,
+  887,
+  727,
+  761,
+  841,
+  812,
+  888,
+  829,
+  730,
+  871,
+  780,
+  709,
+  789,
+  645,
+  797,
+  765,
+  792,
+  747,
+  622
+];
+
 const questionStats = {
   "sanup": [
     {
@@ -1881,11 +1984,19 @@ const lineChart = new Chart(document.getElementById('lineChart'), {
   type: 'line',
   data: {
     labels: dates,
-    datasets: players.map(p => ({
-      label: p.name, data: dailyScores[p.id],
-      borderColor: p.color, backgroundColor: p.color + '18',
-      tension: 0.35, spanGaps: false, pointRadius: 3, pointHoverRadius: 5, borderWidth: 2
-    }))
+    datasets: [
+      ...players.map(p => ({
+        label: p.name, data: dailyScores[p.id],
+        borderColor: p.color, backgroundColor: p.color + '18',
+        tension: 0.35, spanGaps: false, pointRadius: 3, pointHoverRadius: 5, borderWidth: 2
+      })),
+      {
+        label: 'Daily group average', data: dailyGroupAverage,
+        borderColor: 'rgba(240,237,232,0.55)', backgroundColor: 'rgba(240,237,232,0.08)',
+        borderDash: [6, 5], tension: 0.35, spanGaps: false,
+        pointRadius: 0, pointHoverRadius: 4, borderWidth: 2, hidden: true
+      }
+    ]
   },
   options: {
     responsive: true, maintainAspectRatio: false,
@@ -1908,6 +2019,12 @@ players.forEach(p => {
   item.addEventListener('click', () => toggleHighlight(p.id));
   legendEl.appendChild(item);
 });
+
+const groupAverageLegend = document.createElement('span');
+groupAverageLegend.className = 'legend-item group-average hidden';
+groupAverageLegend.setAttribute('aria-label', 'Daily average of players who posted a score');
+groupAverageLegend.innerHTML = '<span class="legend-dot" style="background:rgba(240,237,232,0.55)"></span>daily group avg';
+legendEl.appendChild(groupAverageLegend);
 
 renderLeaderboard();
 
@@ -1941,26 +2058,29 @@ function applyFilter() {
   });
 
   legendItems.forEach(item => {
+    if (item.classList.contains('group-average')) return;
     const count = parseInt(item.dataset.count);
     if (filterActive && count < 10) item.classList.add('hidden');
     else item.classList.remove('hidden');
   });
 
-  // Update bar & line charts to hide filtered players
+  // Update bar & line charts to hide filtered players.
   players.forEach((p, i) => {
     const hide = filterActive && p.count < 10;
     barChart.data.datasets[0].backgroundColor[i] = hide ? 'transparent' : (activePlayer ? (p.id === activePlayer ? p.color : p.color + '14') : p.color + 'cc');
     barChart.data.datasets[0].borderColor[i] = hide ? 'transparent' : (activePlayer ? (p.id === activePlayer ? p.color : p.color + '14') : p.color);
     const ds = lineChart.data.datasets[i];
     if (hide) {
-      ds.borderColor = 'transparent';
-      ds.pointRadius = 0;
+      ds.hidden = true;
     } else {
-      ds.borderColor = activePlayer ? (p.id === activePlayer ? p.color : p.color + '0d') : p.color;
-      ds.pointRadius = activePlayer ? (p.id === activePlayer ? 4 : 0) : 3;
-      ds.borderWidth = activePlayer ? (p.id === activePlayer ? 3 : 1) : 2;
+      ds.hidden = activePlayer ? p.id !== activePlayer : false;
+      ds.borderColor = p.color;
+      ds.pointRadius = activePlayer ? 4 : 3;
+      ds.borderWidth = activePlayer ? 3 : 2;
     }
   });
+  lineChart.data.datasets[players.length].hidden = !activePlayer;
+  groupAverageLegend.classList.toggle('hidden', !activePlayer);
   barChart.update('none');
   lineChart.update('none');
 }
@@ -1982,6 +2102,10 @@ function applyHighlight() {
 
   document.querySelectorAll('.legend-item').forEach(item => {
     if (item.classList.contains('hidden')) return;
+    if (item.classList.contains('group-average')) {
+      item.classList.remove('active', 'dimmed');
+      return;
+    }
     if (!activePlayer) { item.classList.remove('active', 'dimmed'); }
     else if (item.dataset.id === activePlayer) { item.classList.add('active'); item.classList.remove('dimmed'); }
     else { item.classList.add('dimmed'); item.classList.remove('active'); }
@@ -1989,14 +2113,20 @@ function applyHighlight() {
 
   players.forEach((p, i) => {
     const hide = filterActive && p.count < 10;
-    if (hide) return;
+    const ds = lineChart.data.datasets[i];
+    if (hide) {
+      ds.hidden = true;
+      return;
+    }
     barChart.data.datasets[0].backgroundColor[i] = !activePlayer ? p.color + 'cc' : p.id === activePlayer ? p.color : p.color + '14';
     barChart.data.datasets[0].borderColor[i] = !activePlayer ? p.color : p.id === activePlayer ? p.color : p.color + '14';
-    const ds = lineChart.data.datasets[i];
-    if (!activePlayer) { ds.borderColor = p.color; ds.pointRadius = 3; ds.borderWidth = 2; }
-    else if (p.id === activePlayer) { ds.borderColor = p.color; ds.pointRadius = 4; ds.borderWidth = 3; }
-    else { ds.borderColor = p.color + '0d'; ds.pointRadius = 0; ds.borderWidth = 1; }
+    ds.hidden = activePlayer ? p.id !== activePlayer : false;
+    ds.borderColor = p.color;
+    ds.pointRadius = activePlayer ? 4 : 3;
+    ds.borderWidth = activePlayer ? 3 : 2;
   });
+  lineChart.data.datasets[players.length].hidden = !activePlayer;
+  groupAverageLegend.classList.toggle('hidden', !activePlayer);
   barChart.update('none');
   lineChart.update('none');
   renderPlayerDetail();

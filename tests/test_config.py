@@ -76,6 +76,15 @@ class AggregateTests(unittest.TestCase):
         self.assertEqual(data["dailyScores"]["sam"], [700])
         self.assertEqual(data["meta"]["scoreCount"], 2)
 
+    def test_daily_group_average_uses_only_players_who_scored_that_day(self):
+        rows = [
+            ScoreRow(datetime(2026, 6, 21, 10, tzinfo=timezone.utc), "Me", 700),
+            ScoreRow(datetime(2026, 6, 21, 11, tzinfo=timezone.utc), "3125550101", 800),
+            ScoreRow(datetime(2026, 6, 23, 10, tzinfo=timezone.utc), "Me", 900),
+        ]
+        data = build_dashboard_data(rows, CONFIG)
+        self.assertEqual(data["dailyGroupAverage"], [750, None, 900])
+
     def test_question_stats_count_green_by_position_and_skip_missing_slots(self):
         rows = [
             ScoreRow(datetime(2026, 6, 21, 10, tzinfo=timezone.utc), "Me", 700, "🟢🟡🔴🟢🟡"),

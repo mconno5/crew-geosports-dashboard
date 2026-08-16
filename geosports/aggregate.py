@@ -97,6 +97,7 @@ def build_dashboard_data(rows: list[ScoreRow], player_config: dict) -> dict:
             "players": [],
             "dates": [],
             "dailyScores": {},
+            "dailyGroupAverage": [],
             "questionStats": {},
             "groupQuestionStats": [],
         }
@@ -148,6 +149,16 @@ def build_dashboard_data(rows: list[ScoreRow], player_config: dict) -> dict:
         player["id"]: [score_by_player_day.get((player["id"], day)) for day in all_dates]
         for player in player_rows
     }
+    # Compare each player only to the people who recorded a score that day;
+    # absent players are not treated as zeroes in the daily group average.
+    daily_group_average = []
+    for day in all_dates:
+        day_scores = [
+            score_by_player_day[(player["id"], day)]
+            for player in player_rows
+            if (player["id"], day) in score_by_player_day
+        ]
+        daily_group_average.append(round(mean(day_scores)) if day_scores else None)
     question_stats = build_question_stats(by_player, player_rows)
     group_question_stats = build_group_question_stats(question_stats)
 
@@ -182,6 +193,7 @@ def build_dashboard_data(rows: list[ScoreRow], player_config: dict) -> dict:
         "players": player_rows,
         "dates": [day.strftime("%m-%d") for day in all_dates],
         "dailyScores": daily_scores,
+        "dailyGroupAverage": daily_group_average,
         "questionStats": question_stats,
         "groupQuestionStats": group_question_stats,
     }
