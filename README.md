@@ -14,17 +14,20 @@ That command:
 2. Extracts GeoSports-looking iMessage messages.
 3. Parses scores.
 4. Applies the dedupe rule: first score per sender/player per day. Same-score ties from different players are allowed starting June 21, 2026, while older dates keep the original duplicate-score protection.
-5. Merges the private reference backfill, keeping Messages as the source of truth if it later supplies the same player/date.
-6. Writes CSV/JSON data into `data/`.
-7. Writes the final dashboard to `dist/dashboard.html`.
+5. Syncs newly found scores into a private, durable score archive.
+6. Merges the private reference backfill without replacing archived history.
+7. Writes CSV/JSON data into `data/`.
+8. Writes the final dashboard to `dist/dashboard.html`.
 
 ## Files
 
 - `config/players.json`: public player config keyed by slug (display name and color). Contains no phone numbers.
 - `config/senders.local.json`: private, gitignored mapping from iMessage sender handles (phone numbers, "Me") to player slugs. Unmapped senders get an anonymous hashed ID so raw handles never reach generated output.
 - `data/geosports_scores.csv`: raw matching messages.
-- `data/geosports_parsed.csv`: deduped score rows.
+- `data/geosports_parsed.csv`: the complete, deduped score rows used for the latest dashboard build.
 - `data/geosports_backfill.local.csv`: private screenshot-verified scores for missing Messages periods. It is gitignored and uses public player slugs rather than phone numbers.
+- `data/geosports_history.local.csv`: private canonical score history. It contains only score date, public player slug, score, and answer markers, so cleared Messages history remains represented in the dashboard.
+- `data/geosports_history_manifest.local.json`: private archive row counts, date range, player counts, and checksum. It contains no raw Messages data.
 - `data/dashboard_data.json`: generated dashboard payload.
 - `dist/dashboard.html`: generated shareable report.
 
@@ -77,9 +80,44 @@ date,player_id,score,emoji_row
 2026-07-17,sanup,848,🟢🟡🟡🟢🟡
 ```
 
-`player_id` must be a configured public slug and each player/date may appear once. The file may include a local-only `source_image` column for auditability. If Messages later syncs a score for the same player/date, that Messages row is retained and the reference row is skipped. A score or emoji mismatch is logged using only the public player slug. To correct a reference entry, edit the local file and run the normal build; do not add it to Git.
+`player_id` must be a configured public slug and each player/date may appear once. The file may include a local-only `source_image` column for auditability. During the first archive snapshot, Messages rows take precedence over conflicting backfill rows. Once a score is in the archive, it is retained if a later source disagrees; the build logs only the date, public player slug, and source. Use the explicit archive reconcile command to make a reviewed correction. Archive answer-marker rows may be blank or partial for older valid share formats. Do not add this file to Git.
 
 GeoSports uses `🏆` for a 100-point answer. The dashboard keeps that marker at its original question position, counts it as correct for accuracy, and reports it separately as a perfect answer in the player drilldown.
+
+### Private Score Archive
+
+The normal daily build automatically syncs `data/geosports_history.local.csv`. The archive is the durable source for prior scores, so it is safe to clear old Messages after confirming the archive is healthy. It contains no sender handles, phone numbers, chat IDs, raw message text, or screenshots.
+
+Create or update the archive manually without publishing the dashboard:
+
+```bash
+python3 -m geosports archive snapshot
+```
+
+Preview a snapshot first:
+
+```bash
+python3 -m geosports archive snapshot --dry-run
+```
+
+Check coverage and verify the checksum:
+
+```bash
+python3 -m geosports archive status
+python3 -m geosports archive verify
+```
+
+If a reviewed conflict needs correction, make the change explicitly rather than letting a live Message overwrite history:
+
+```bash
+python3 -m geosports archive reconcile \
+  --date 2026-07-17 \
+  --player-id sanup \
+  --score 848 \
+  --emoji-row "🟢🟡🟡🟢🟡"
+```
+
+Before clearing Messages history, run `archive verify`, keep the private `data/` folder in a private Mac backup such as Time Machine, and run one normal dashboard build after deletion to confirm the date range and score count are unchanged.
 
 ## GitHub Pages
 
@@ -112,6 +150,8 @@ This repo includes a LaunchAgent template at:
 ```text
 launchd/com.mark.geosports-dashboard.plist
 ```
+
+The 1 PM daily job runs the same normal build, including the private archive sync. No LaunchAgent schedule changes are required.
 
 It runs every day at 1:00 PM and writes logs to:
 
