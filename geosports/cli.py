@@ -12,6 +12,7 @@ from .archive import (
     manifest_status,
     read_archive_scores,
     reconcile_archive_row,
+    remove_archive_row,
     sync_archive,
     write_archive,
 )
@@ -19,7 +20,7 @@ from .backfill import BackfillValidationError, read_backfill_scores
 from .config import load_player_config
 from .imessage import DB_PATH, MessagesDatabaseError, fetch_messages, resolve_chat_ids
 from .io import read_scores_csv, write_raw_csv, write_scores_csv
-from .parser import dedupe_scores, parse_messages
+from .parser import dedupe_scores, parse_messages_with_diagnostics
 from .recap import add_recap_subparser
 from .render import render_dashboard
 
@@ -49,13 +50,14 @@ def load_live_scores(args: argparse.Namespace, player_config: dict):
         raw_messages = fetch_messages(Path(args.db), chat_ids)
     except MessagesDatabaseError as exc:
         raise SystemExit(str(exc)) from exc
-    parsed = parse_messages(raw_messages)
+    parse_result = parse_messages_with_diagnostics(raw_messages)
+    parsed = parse_result.rows
     message_scores = dedupe_scores(parsed)
     try:
         backfill_scores = read_backfill_scores(Path(args.backfill), player_config)
     except BackfillValidationError as exc:
         raise SystemExit(f"Invalid private backfill reference: {exc}") from exc
-    return raw_messages, parsed, message_scores, backfill_scores
+    return raw_messages, parsed, message_scores, backfill_scores, parse_result.rejected_out_of_range
 
 
 def sync_private_archive(
@@ -114,8 +116,9 @@ def build(args: argparse.Namespace) -> None:
         raw_count = 0
         parsed_count = len(message_scores)
         message_score_count = len(message_scores)
+        rejected_out_of_range = 0
     else:
-        raw_messages, parsed, message_scores, backfill_scores = load_live_scores(args, player_config)
+        raw_messages, parsed, message_scores, backfill_scores, rejected_out_of_range = load_live_scores(args, player_config)
         raw_count = len(raw_messages)
         parsed_count = len(parsed)
         message_score_count = len(message_scores)
@@ -139,6 +142,7 @@ def build(args: argparse.Namespace) -> None:
     removed = parsed_count - message_score_count
     print(f"Raw GeoSports messages: {raw_count}")
     print(f"Parsed Messages scores: {parsed_count} -> {message_score_count} after dedupe (removed {removed})")
+    print(f"Rejected out-of-range GeoSports scores: {rejected_out_of_range}")
     print_archive_result(source_result, archive_path)
     print(f"Combined dashboard scores: {len(scores)}")
     print(f"Data: {data_path}")
@@ -192,7 +196,7 @@ def archive_verify(args: argparse.Namespace) -> None:
 
 def archive_snapshot(args: argparse.Namespace) -> None:
     player_config = load_player_config(Path(args.players))
-    raw_messages, parsed, message_scores, backfill_scores = load_live_scores(args, player_config)
+    raw_messages, parsed, message_scores, backfill_scores, rejected_out_of_range = load_live_scores(args, player_config)
     result, _ = sync_private_archive(
         Path(args.archive),
         Path(args.archive_manifest),
@@ -203,6 +207,7 @@ def archive_snapshot(args: argparse.Namespace) -> None:
     )
     print(f"Raw GeoSports messages: {len(raw_messages)}")
     print(f"Parsed Messages scores: {len(parsed)} -> {len(message_scores)} after dedupe")
+    print(f"Rejected out-of-range GeoSports scores: {rejected_out_of_range}")
     print_archive_result(result, Path(args.archive), dry_run=args.dry_run)
 
 
@@ -225,6 +230,20 @@ def archive_reconcile(args: argparse.Namespace) -> None:
         raise SystemExit(f"Cannot reconcile private score archive: {exc}") from exc
     write_archive(archive_path, manifest_path, rows, player_config)
     print(f"Reconciled private archive for {args.date} player={args.player_id}")
+
+
+def archive_remove(args: argparse.Namespace) -> None:
+    player_config = load_player_config(Path(args.players))
+    archive_path = Path(args.archive)
+    manifest_path = Path(args.archive_manifest)
+    try:
+        score_date = datetime.strptime(args.date, "%Y-%m-%d").date()
+        archive_rows = read_archive_scores(archive_path, player_config, allow_out_of_range=True)
+        rows = remove_archive_row(archive_rows, args.player_id, score_date, player_config)
+        write_archive(archive_path, manifest_path, rows, player_config)
+    except (ArchiveValidationError, ValueError) as exc:
+        raise SystemExit(f"Cannot remove private archive score: {exc}") from exc
+    print(f"Removed private archive score for {args.date} player={args.player_id}")
 
 
 def main() -> None:
@@ -286,6 +305,13 @@ def main() -> None:
     reconcile_parser.add_argument("--score", required=True, type=int)
     reconcile_parser.add_argument("--emoji-row", required=True, help="Blank or up to five GeoSports answer markers.")
     reconcile_parser.set_defaults(func=archive_reconcile)
+
+    remove_parser = archive_commands.add_parser("remove", help="Remove one reviewed private archive score.")
+    remove_parser.add_argument("--players", default=str(DEFAULT_PLAYERS))
+    add_archive_arguments(remove_parser)
+    remove_parser.add_argument("--date", required=True, help="Score date in YYYY-MM-DD format.")
+    remove_parser.add_argument("--player-id", required=True, help="Configured public player slug.")
+    remove_parser.set_defaults(func=archive_remove)
 
     add_recap_subparser(subparsers)
 

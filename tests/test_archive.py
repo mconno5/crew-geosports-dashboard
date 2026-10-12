@@ -8,6 +8,7 @@ import unittest
 from geosports.archive import (
     ArchiveValidationError,
     read_archive_scores,
+    remove_archive_row,
     sync_archive,
     write_archive,
 )
@@ -103,6 +104,25 @@ class ArchiveTests(unittest.TestCase):
         rows = read_archive_scores(self.archive_path, CONFIG)
         self.assertEqual(rows[0].emoji_row, "")
         self.assertEqual(rows[1].emoji_row, "🟢🟡🟢")
+
+    def test_archive_rejects_new_invalid_scores_but_can_remove_a_legacy_zero(self):
+        with self.archive_path.open("w", newline="", encoding="utf-8") as file:
+            writer = csv.writer(file)
+            writer.writerow(["date", "player_id", "score", "emoji_row"])
+            writer.writerow(["2026-07-17", "mark", 0, "🟢🟡🟡🟢🟡"])
+
+        with self.assertRaises(ArchiveValidationError):
+            read_archive_scores(self.archive_path, CONFIG)
+
+        legacy_rows = read_archive_scores(self.archive_path, CONFIG, allow_out_of_range=True)
+        remaining = remove_archive_row(legacy_rows, "mark", datetime(2026, 7, 17).date(), CONFIG)
+        write_archive(self.archive_path, self.manifest_path, remaining, CONFIG)
+
+        self.assertEqual(read_archive_scores(self.archive_path, CONFIG), [])
+
+    def test_sync_rejects_an_invalid_score_row(self):
+        with self.assertRaises(ArchiveValidationError):
+            sync_archive([], [self.score(17, "Me", 1001)], [], CONFIG)
 
 
 if __name__ == "__main__":

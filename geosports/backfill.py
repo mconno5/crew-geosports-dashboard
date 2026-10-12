@@ -6,7 +6,7 @@ from datetime import datetime, time, timezone
 from pathlib import Path
 
 from .config import player_id
-from .models import ScoreRow
+from .models import ScoreRow, is_valid_score
 
 BACKFILL_HEADERS = {"date", "player_id", "score", "emoji_row"}
 QUESTION_MARKERS = {"🟢", "🟡", "🔴", "⚫", "⬛", "🔵", "🏆"}
@@ -54,8 +54,8 @@ def read_backfill_scores(path: Path, player_config: dict) -> list[ScoreRow]:
                 score = int(row["score"])
             except (KeyError, ValueError) as exc:
                 raise BackfillValidationError(f"{path.name}:{line_number} has an invalid score") from exc
-            if not 0 <= score <= 1000:
-                raise BackfillValidationError(f"{path.name}:{line_number} score must be between 0 and 1000")
+            if not is_valid_score(score):
+                raise BackfillValidationError(f"{path.name}:{line_number} score must be between 1 and 1000")
 
             emoji_row = row.get("emoji_row", "").strip()
             if len(emoji_row) != 5 or any(marker not in QUESTION_MARKERS for marker in emoji_row):

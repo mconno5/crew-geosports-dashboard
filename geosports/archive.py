@@ -11,7 +11,7 @@ from datetime import datetime, time, timezone
 from pathlib import Path
 
 from .config import player_id
-from .models import ScoreRow
+from .models import ScoreRow, is_valid_score
 
 ARCHIVE_HEADERS = ("date", "player_id", "score", "emoji_row")
 QUESTION_MARKERS = {"🟢", "🟡", "🔴", "⚫", "⬛", "🔵", "🏆"}
@@ -53,7 +53,9 @@ def valid_emoji_row(emoji_row: str) -> bool:
     )
 
 
-def read_archive_scores(path: Path, player_config: dict) -> list[ScoreRow]:
+def read_archive_scores(
+    path: Path, player_config: dict, *, allow_out_of_range: bool = False
+) -> list[ScoreRow]:
     """Read the private canonical score history without raw Messages metadata."""
     if not path.exists():
         return []
@@ -82,8 +84,8 @@ def read_archive_scores(path: Path, player_config: dict) -> list[ScoreRow]:
                 score = int(row["score"])
             except (KeyError, ValueError) as exc:
                 raise ArchiveValidationError(f"{path.name}:{line_number} has an invalid score") from exc
-            if not 0 <= score <= 1000:
-                raise ArchiveValidationError(f"{path.name}:{line_number} score must be between 0 and 1000")
+            if not is_valid_score(score) and not allow_out_of_range:
+                raise ArchiveValidationError(f"{path.name}:{line_number} score must be between 1 and 1000")
 
             emoji_row = row.get("emoji_row", "").strip()
             if not valid_emoji_row(emoji_row):
@@ -121,6 +123,8 @@ def sync_archive(
 
     for source, source_rows in (("messages", message_rows), ("backfill", backfill_rows)):
         for row in sorted(source_rows, key=lambda item: item.timestamp):
+            if not is_valid_score(row.score):
+                raise ArchiveValidationError(f"{source} score must be between 1 and 1000")
             player, score_date = score_key(row, player_config)
             key = (player, score_date)
             existing = merged.get(key)
@@ -209,6 +213,8 @@ def manifest_status(path: Path, rows: list[ScoreRow], player_config: dict) -> st
 
 def write_archive(path: Path, manifest_path: Path, rows: list[ScoreRow], player_config: dict) -> None:
     """Atomically update the archive and its privacy-safe integrity manifest."""
+    if any(not is_valid_score(row.score) for row in rows):
+        raise ArchiveValidationError("archive score must be between 1 and 1000")
     csv_text = archive_csv_text(rows, player_config)
     manifest = build_manifest(rows, player_config)
     atomic_write_text(path, csv_text)
@@ -226,8 +232,8 @@ def reconcile_archive_row(
     """Replace one archived score only after an explicit operator decision."""
     if player not in player_config["players"]:
         raise ArchiveValidationError("unknown player_id")
-    if not 0 <= score <= 1000:
-        raise ArchiveValidationError("score must be between 0 and 1000")
+    if not is_valid_score(score):
+        raise ArchiveValidationError("score must be between 1 and 1000")
     if not valid_emoji_row(emoji_row):
         raise ArchiveValidationError("emoji_row must be blank or contain up to five valid answer markers")
 
@@ -243,3 +249,16 @@ def reconcile_archive_row(
     if not replaced:
         rows.append(archive_score_row(score_date, player, score, emoji_row))
     return sorted(rows, key=lambda row: (row.timestamp, row.sender))
+
+
+def remove_archive_row(
+    archive_rows: list[ScoreRow], player: str, score_date, player_config: dict
+) -> list[ScoreRow]:
+    """Remove one reviewed archive row, including a legacy invalid score."""
+    if player not in player_config["players"]:
+        raise ArchiveValidationError("unknown player_id")
+    key = (player, score_date)
+    remaining = [row for row in archive_rows if score_key(row, player_config) != key]
+    if len(remaining) == len(archive_rows):
+        raise ArchiveValidationError("no archive score found for player/date")
+    return remaining

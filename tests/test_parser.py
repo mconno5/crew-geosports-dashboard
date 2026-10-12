@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 import unittest
 
 from geosports.models import RawMessage, ScoreRow
-from geosports.parser import dedupe_scores, parse_messages, parse_score
+from geosports.parser import dedupe_scores, parse_messages, parse_messages_with_diagnostics, parse_score
 
 
 class ParserTests(unittest.TestCase):
@@ -14,6 +14,11 @@ class ParserTests(unittest.TestCase):
             parse_score("GeoSports · August 5th 🟢🏆🟡🟢🔴 771 / 1,000"),
             (771, "🟢🏆🟡🟢🔴"),
         )
+
+    def test_parse_score_rejects_zero_and_scores_above_the_game_maximum(self):
+        self.assertEqual(parse_score("GeoSports 0 / 1,000"), (None, None))
+        self.assertEqual(parse_score("GeoSports 1,001 / 1,000"), (None, None))
+        self.assertEqual(parse_score("GeoSports 1,000 / 1,000"), (1000, ""))
 
     def test_parse_messages_filters_non_scores(self):
         rows = parse_messages(
@@ -43,6 +48,19 @@ class ParserTests(unittest.TestCase):
             ]
         )
         self.assertEqual([(r.sender, r.score) for r in rows], [("3125550101", 726)])
+
+    def test_rejected_fake_score_does_not_block_a_later_valid_score(self):
+        day = datetime(2026, 10, 12, tzinfo=timezone.utc)
+        result = parse_messages_with_diagnostics(
+            [
+                RawMessage(day.replace(hour=10), "+13125550100", "GeoSports 0 / 1,000"),
+                RawMessage(day.replace(hour=11), "+13125550100", "GeoSports 725 / 1,000"),
+                RawMessage(day.replace(hour=12), "+13125550101", "GeoSports 1,001 / 1,000"),
+            ]
+        )
+
+        self.assertEqual(result.rejected_out_of_range, 2)
+        self.assertEqual([(row.sender, row.score) for row in dedupe_scores(result.rows)], [("3125550100", 725)])
 
     def test_dedupe_keeps_first_sender_and_old_first_score_rule_before_tie_cutoff(self):
         day = datetime(2026, 6, 3, tzinfo=timezone.utc)

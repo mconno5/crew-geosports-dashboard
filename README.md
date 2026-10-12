@@ -13,7 +13,7 @@ That command:
 1. Finds chats matching `The Crew`.
 2. Extracts GeoSports-looking iMessage messages.
 3. Parses scores.
-4. Applies the dedupe rule: first score per sender/player per day. Same-score ties from different players are allowed starting June 21, 2026, while older dates keep the original duplicate-score protection.
+4. Rejects score-shaped posts outside the valid `1-1000` GeoSports range, then applies the dedupe rule: first score per sender/player per day. Same-score ties from different players are allowed starting June 21, 2026, while older dates keep the original duplicate-score protection.
 5. Syncs newly found scores into a private, durable score archive.
 6. Merges the private reference backfill without replacing archived history.
 7. Writes CSV/JSON data into `data/`.
@@ -84,6 +84,8 @@ date,player_id,score,emoji_row
 
 GeoSports uses `🏆` for a 100-point answer. The dashboard keeps that marker at its original question position, counts it as correct for accuracy, and reports it separately as a perfect answer in the player drilldown.
 
+Scores must be whole numbers from `1` through `1,000`. Out-of-range live Messages posts are ignored before same-day deduplication, so they cannot block a valid later score from the same player. The build reports only the rejected count and never logs raw chat text or sender identifiers.
+
 ### Private Score Archive
 
 The normal daily build automatically syncs `data/geosports_history.local.csv`. The archive is the durable source for prior scores, so it is safe to clear old Messages after confirming the archive is healthy. It contains no sender handles, phone numbers, chat IDs, raw message text, or screenshots.
@@ -115,6 +117,14 @@ python3 -m geosports archive reconcile \
   --player-id sanup \
   --score 848 \
   --emoji-row "🟢🟡🟡🟢🟡"
+```
+
+To remove a reviewed invalid historical score from the private archive:
+
+```bash
+python3 -m geosports archive remove \
+  --date 2026-07-17 \
+  --player-id sanup
 ```
 
 Before clearing Messages history, run `archive verify`, keep the private `data/` folder in a private Mac backup such as Time Machine, and run one normal dashboard build after deletion to confirm the date range and score count are unchanged.

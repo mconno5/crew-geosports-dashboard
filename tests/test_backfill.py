@@ -81,6 +81,15 @@ class BackfillTests(unittest.TestCase):
         with self.assertRaises(BackfillValidationError):
             read_backfill_scores(path, CONFIG)
 
+    def test_reference_rejects_zero_and_above_maximum_scores(self):
+        for score in (0, 1001):
+            path = self.write_backfill(
+                "date,player_id,score,emoji_row\n"
+                f"2026-07-17,mark,{score},🟢🟡🟡🟢🟡\n"
+            )
+            with self.assertRaises(BackfillValidationError):
+                read_backfill_scores(path, CONFIG)
+
 
 if __name__ == "__main__":
     unittest.main()

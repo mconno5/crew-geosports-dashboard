@@ -5,6 +5,7 @@ from datetime import datetime
 from pathlib import Path
 
 from .models import RawMessage, ScoreRow
+from .models import is_valid_score
 
 DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
@@ -38,12 +39,17 @@ def write_scores_csv(path: Path, rows: list[ScoreRow]) -> None:
 def read_scores_csv(path: Path) -> list[ScoreRow]:
     with path.open(newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
-        return [
-            ScoreRow(
-                timestamp=parse_timestamp(row["timestamp"]),
-                sender=row["sender"],
-                score=int(row["score"]),
-                emoji_row=row.get("emoji_row", ""),
+        rows = []
+        for line_number, row in enumerate(reader, start=2):
+            score = int(row["score"])
+            if not is_valid_score(score):
+                raise ValueError(f"{path.name}:{line_number} score must be between 1 and 1000")
+            rows.append(
+                ScoreRow(
+                    timestamp=parse_timestamp(row["timestamp"]),
+                    sender=row["sender"],
+                    score=score,
+                    emoji_row=row.get("emoji_row", ""),
+                )
             )
-            for row in reader
-        ]
+        return rows

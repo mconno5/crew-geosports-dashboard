@@ -76,6 +76,11 @@ class AggregateTests(unittest.TestCase):
         self.assertEqual(data["dailyScores"]["sam"], [700])
         self.assertEqual(data["meta"]["scoreCount"], 2)
 
+    def test_dashboard_rejects_out_of_range_score(self):
+        rows = [ScoreRow(datetime(2026, 6, 21, 10, tzinfo=timezone.utc), "Me", 0)]
+        with self.assertRaises(ValueError):
+            build_dashboard_data(rows, CONFIG)
+
     def test_daily_group_average_uses_only_players_who_scored_that_day(self):
         rows = [
             ScoreRow(datetime(2026, 6, 21, 10, tzinfo=timezone.utc), "Me", 700),

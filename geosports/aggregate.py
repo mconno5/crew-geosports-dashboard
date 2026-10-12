@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 from statistics import mean
 
 from .config import player_display, player_id
-from .models import ScoreRow
+from .models import ScoreRow, is_valid_score
 
 RECENT_FORM_DAYS = 7
 QUESTION_COUNT = 5
@@ -81,6 +81,8 @@ def build_group_question_stats(question_stats: dict[str, list[dict]]) -> list[di
 
 
 def build_dashboard_data(rows: list[ScoreRow], player_config: dict) -> dict:
+    if any(not is_valid_score(row.score) for row in rows):
+        raise ValueError("Dashboard data contains a score outside 1-1000")
     if not rows:
         generated = datetime.now(timezone.utc).date().isoformat()
         return {
